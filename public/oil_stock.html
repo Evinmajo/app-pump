@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oil Stock Manager</title>
+    <style>
+        :root { --p: #2563eb; --s: #059669; --d: #dc2626; --bg: #f8fafc; --c: #fff; }
+        body { font-family: system-ui, sans-serif; margin: 0; background: var(--bg); color: #1e293b; line-height: 1.5; }
+        .nav { background: var(--c); padding: 1rem; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: var(--p); text-align: center; }
+        .container { max-width: 1000px; margin: 1.5rem auto; padding: 0 1rem; display: grid; gap: 1.5rem; grid-template-columns: 1fr 350px; }
+        @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
+        .card { background: var(--c); padding: 1.25rem; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        h2 { margin-top: 0; font-size: 1.1rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.5rem; }
+        .item { display: flex; justify-content: space-between; padding: 0.75rem; border-bottom: 1px solid #f1f5f9; cursor: pointer; border-radius: 4px; }
+        .item:hover { background: #f1f5f9; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.25rem; }
+        input { width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
+        .btn-box { display: grid; gap: 0.5rem; margin-top: 1rem; }
+        button { padding: 0.7rem; border: none; border-radius: 6px; color: #fff; font-weight: 600; cursor: pointer; }
+        .add { background: var(--s); } .upd { background: var(--p); } .del { background: transparent; color: var(--d); border: 1px solid var(--d); }
+        .msg { margin-top: 1rem; padding: 0.5rem; border-radius: 4px; font-size: 0.85rem; display: none; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="nav">Oil Stock Control</div>
+    <div class="container">
+        <div class="card">
+            <h2>Live Inventory</h2>
+            <div id="stockDisplay"><p style="text-align:center;color:#64748b">Loading...</p></div>
+        </div>
+        <div class="card">
+            <h2>Manage</h2>
+            <div class="form-group"><label>Oil Type</label><input type="text" id="oilType" placeholder="Product name"></div>
+            <div class="form-group"><label>Quantity</label><input type="number" id="qty" value="0" step="any"></div>
+            <div class="btn-box">
+                <button class="add" id="addBtn">Add Stock</button>
+                <button class="upd" id="updBtn">Update Selected</button>
+                <button class="del" id="delBtn">Delete</button>
+            </div>
+            <div id="msg" class="msg"></div>
+        </div>
+    </div>
+    <script>
+        const $ = id => document.getElementById(id);
+        const disp = $('stockDisplay'), typeInp = $('oilType'), qtyInp = $('qty'), msg = $('msg');
+
+        function showMsg(t, c) { msg.textContent = t; msg.style.display = 'block'; msg.style.background = c === 's' ? '#dcfce7' : '#fee2e2'; setTimeout(() => msg.style.display = 'none', 3000); }
+
+        async function load() {
+            try {
+                const r = await fetch('/api/oilStock');
+                const data = await r.json();
+                disp.innerHTML = data.length ? '' : '<p style="text-align:center">Empty</p>';
+                data.forEach(i => {
+                    const d = document.createElement('div'); d.className = 'item';
+                    d.innerHTML = `<b>${i.type}</b><span>${i.quantity}</span>`;
+                    d.onclick = () => { typeInp.value = i.type; qtyInp.value = i.quantity; typeInp.dataset.id = i._id; };
+                    disp.appendChild(d);
+                });
+            } catch (e) { showMsg('Load failed', 'e'); }
+        }
+
+        const req = async (m, url, b) => {
+            try {
+                const r = await fetch(url, { method: m, headers: {'Content-Type': 'application/json'}, body: b ? JSON.stringify(b) : null });
+                if (!r.ok) throw r;
+                showMsg('Success', 's'); load(); typeInp.value = ''; qtyInp.value = 0; delete typeInp.dataset.id;
+            } catch (e) { showMsg('Action failed', 'e'); }
+        };
+
+        $('addBtn').onclick = () => req('POST', '/api/oilStock', {type: typeInp.value, quantity: parseFloat(qtyInp.value)});
+        $('updBtn').onclick = () => typeInp.dataset.id && req('PUT', `/api/oilStock/${typeInp.dataset.id}`, {type: typeInp.value, quantity: parseFloat(qtyInp.value)});
+        $('delBtn').onclick = () => typeInp.dataset.id && confirm('Delete?') && req('DELETE', `/api/oilStock/${typeInp.dataset.id}`);
+        load();
+    </script>
+</body>
+</html>

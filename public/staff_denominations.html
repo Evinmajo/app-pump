@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Staff Denomination Report</title>
+    <script src="./style.js"></script>
+    <style>
+        /* Styling inspired by view_transactions.html */
+        .date-header {
+            background-color: #f3f4f6;
+            font-weight: bold;
+            color: #374151;
+        }
+        .transaction-row:hover {
+            background-color: #f9fafb;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-10">
+    <div class="max-w-4xl mx-auto bg-white p-8 rounded shadow">
+        <h1 class="text-2xl font-bold mb-6 text-gray-800">Staff Daily Denomination Report</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 items-end">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Staff Member</label>
+                <select id="staffSelect" class="w-full border p-2 rounded focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">All Staff</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">From Date</label>
+                <input type="date" id="fromDate" class="w-full border p-2 rounded">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">To Date</label>
+                <input type="date" id="toDate" class="w-full border p-2 rounded">
+            </div>
+            <button onclick="fetchReport()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded h-10 transition">
+                Search
+            </button>
+        </div>
+
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-gray-200 text-gray-700">
+                    <th class="border p-3">Details</th>
+                    <th class="border p-3">Staff Name</th>
+                    <th class="border p-3 text-right">Collection Amount</th>
+                </tr>
+            </thead>
+            <tbody id="reportContent" class="text-gray-600">
+                <tr>
+                    <td colspan="3" class="p-3 text-center italic text-gray-400">Select dates and click search...</td>
+                </tr>
+            </tbody>
+            <tfoot id="reportFooter" class="hidden">
+                <tr class="bg-blue-50 font-bold">
+                    <td colspan="2" class="border p-3 text-right text-gray-800 text-lg uppercase tracking-wider">Grand Total:</td>
+                    <td id="grandTotal" class="border p-3 text-right text-blue-700 text-xl">₹0.00</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <script>
+        // Populate staff dropdown on load (similar to view_transactions.html logic)
+        async function populateStaffDropdown() {
+            const staffSelect = document.getElementById('staffSelect');
+            try {
+                const response = await fetch('/api/staff');
+                const staffMembers = await response.json();
+                staffMembers.forEach(staff => {
+                    const option = document.createElement('option');
+                    option.value = staff.staffId;
+                    option.textContent = staff.name;
+                    staffSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching staff members:', error);
+            }
+        }
+
+        async function fetchReport() {
+            const from = document.getElementById('fromDate').value;
+            const to = document.getElementById('toDate').value;
+            const staff = document.getElementById('staffSelect').value;
+            
+            if (!from || !to) return alert("Please select a date range");
+
+            try {
+                const response = await fetch(`/api/reports/staff-denominations?fromDate=${from}&toDate=${to}&staff=${staff}`);
+                const data = await response.json();
+                
+                const tbody = document.getElementById('reportContent');
+                const footer = document.getElementById('reportFooter');
+                const grandTotalEl = document.getElementById('grandTotal');
+
+                if (!data || Object.keys(data).length === 0 || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" class="p-3 text-center">No records found for this period</td></tr>';
+                    footer.classList.add('hidden');
+                    return;
+                }
+
+                // If backend returns a flat array, we group it by date manually to match view_transactions.html style
+                const groupedData = Array.isArray(data) ? data.reduce((acc, curr) => {
+                    const date = curr.date;
+                    if (!acc[date]) acc[date] = [];
+                    acc[date].push(curr);
+                    return acc;
+                }, {}) : data;
+
+                let totalSum = 0;
+                let html = '';
+
+                // Iterate through dates to create grouped view
+                Object.keys(groupedData).sort((a, b) => new Date(b) - new Date(a)).forEach(date => {
+                    // Date Header Row
+                    html += `
+                        <tr class="date-header">
+                            <td colspan="3" class="p-3 border text-blue-900 bg-blue-50">
+                                ${new Date(date).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                            </td>
+                        </tr>
+                    `;
+
+                    // Individual Records for that date
+                    groupedData[date].forEach(row => {
+                        const amount = parseFloat(row.totalDenomination) || 0;
+                        totalSum += amount;
+                        html += `
+                            <tr class="transaction-row border-b hover:bg-gray-50">
+                                <td class="p-3 border text-gray-400 text-sm italic italic">Collection Entry</td>
+                                <td class="p-3 border font-medium text-gray-800">${row.name}</td>
+                                <td class="p-3 border text-right font-bold text-green-700">₹${amount.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                            </tr>
+                        `;
+                    });
+                });
+
+                tbody.innerHTML = html;
+                grandTotalEl.innerText = `₹${totalSum.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                footer.classList.remove('hidden');
+
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Could not load report data.");
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', populateStaffDropdown);
+    </script>
+</body>
+</html>

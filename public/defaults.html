@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set Default Readings</title>
+    <script src="./style.js"></script>
+</head>
+<body class="bg-blue-600 p-10 flex justify-center">
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+        <h1 class="text-2xl font-bold mb-6 text-center">Set Initial Readings</h1>
+        
+        <div class="space-y-4">
+            <h3 class="font-bold border-b pb-2">Petrol (Initial)</h3>
+            <div class="grid grid-cols-2 gap-2">
+                <input type="number" id="p1" placeholder="Nozzle 1" class="p-2 border rounded">
+                <input type="number" id="p2" placeholder="Nozzle 2" class="p-2 border rounded">
+                <input type="number" id="p3" placeholder="Nozzle 3" class="p-2 border rounded">
+                <input type="number" id="p4" placeholder="Nozzle 4" class="p-2 border rounded">
+                <input type="number" id="p5" placeholder="Nozzle 5" class="p-2 border rounded">
+                <input type="number" id="p6" placeholder="Nozzle 6" class="p-2 border rounded">
+            </div>
+
+            <h3 class="font-bold border-b pb-2 mt-4">Diesel (Initial)</h3>
+            <div class="grid grid-cols-2 gap-2">
+                <input type="number" id="d1" placeholder="Nozzle 1" class="p-2 border rounded">
+                <input type="number" id="d2" placeholder="Nozzle 2" class="p-2 border rounded">
+                <input type="number" id="d3" placeholder="Nozzle 3" class="p-2 border rounded">
+                <input type="number" id="d4" placeholder="Nozzle 4" class="p-2 border rounded">
+                <input type="number" id="d5" placeholder="Nozzle 5" class="p-2 border rounded">
+                <input type="number" id="d6" placeholder="Nozzle 6" class="p-2 border rounded">
+            </div>
+
+            <h3 class="font-bold border-b pb-2 mt-4">Speed (Initial)</h3>
+            <div class="grid grid-cols-2 gap-2">
+                <input type="number" id="s1" placeholder="Nozzle 7" class="p-2 border rounded">
+                <input type="number" id="s2" placeholder="Nozzle 8" class="p-2 border rounded">
+                <input type="number" id="s3" placeholder="Nozzle 9" class="p-2 border rounded">
+            </div>
+
+            <button onclick="updateDefaults()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold mt-6">
+                Update Defaults
+            </button>
+        </div>
+    </div>
+
+    <script>
+        async function updateDefaults() {
+            const body = {
+                p1: document.getElementById('p1').value || 0,
+                p2: document.getElementById('p2').value || 0,
+                p3: document.getElementById('p3').value || 0,
+                p4: document.getElementById('p4').value || 0,
+                p5: document.getElementById('p5').value || 0,
+                p6: document.getElementById('p6').value || 0,
+                d1: document.getElementById('d1').value || 0,
+                d2: document.getElementById('d2').value || 0,
+                d3: document.getElementById('d3').value || 0,
+                d4: document.getElementById('d4').value || 0,
+                d5: document.getElementById('d5').value || 0,
+                d6: document.getElementById('d6').value || 0,
+                // Speed Fields
+                s1: document.getElementById('s1').value || 0,
+                s2: document.getElementById('s2').value || 0,
+                s3: document.getElementById('s3').value || 0
+            };
+
+            const res = await fetch('/api/defaults/update', {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(body)
+            });
+
+            if(res.ok) {
+                alert('Defaults updated successfully!');
+            } else {
+                alert('Failed to update defaults.');
+            }
+        }
+
+        // Load existing readings on page load
+        window.onload = async () => {
+            try {
+                const res = await fetch('/api/defaults');
+                const data = await res.json();
+                
+                // Petrol
+                document.getElementById('p1').value = data.p1 || 0;
+                document.getElementById('p2').value = data.p2 || 0;
+                document.getElementById('p3').value = data.p3 || 0;
+                document.getElementById('p4').value = data.p4 || 0;
+                document.getElementById('p5').value = data.p5 || 0;
+                document.getElementById('p6').value = data.p6 || 0;
+                
+                // Diesel
+                document.getElementById('d1').value = data.d1 || 0;
+                document.getElementById('d2').value = data.d2 || 0;
+                document.getElementById('d3').value = data.d3 || 0;
+                document.getElementById('d4').value = data.d4 || 0;
+                document.getElementById('d5').value = data.d5 || 0;
+                document.getElementById('d6').value = data.d6 || 0;
+
+                // Speed
+                document.getElementById('s1').value = data.s1 || 0;
+                document.getElementById('s2').value = data.s2 || 0;
+                document.getElementById('s3').value = data.s3 || 0;
+            } catch (error) {
+                console.error('Error fetching defaults:', error);
+            }
+        };
+    </script>
+</body>
+</html>
