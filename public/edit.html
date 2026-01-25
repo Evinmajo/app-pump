@@ -394,6 +394,12 @@
                                    class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center"
                                    placeholder="0" step="0.01">
                         </div>
+                        <div class="mb-6">
+                            <label for="totalDenomination" class="block text-lg font-semibold text-gray-700 mb-2">Total Denomination Amount</label>
+                            <input type="number" id="totalDenomination" name="totalDenomination" 
+                                   class="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 font-bold text-center" 
+                                   readonly>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -634,6 +640,29 @@
             }
         }
 
+        // Function to calculate total denomination
+function calculateTotalDenomination() {
+    const denominations = {
+        'note500': 500, 'note200': 200, 'note100': 100, 
+        'note50': 50, 'note20': 20, 'note10': 10, 
+        'note5': 5, 'coins': 1
+    };
+
+    let total = 0;
+    for (const [id, value] of Object.entries(denominations)) {
+        const count = parseFloat(document.getElementById(id)?.value) || 0;
+        total += count * value;
+    }
+    document.getElementById('totalDenomination').value = total;
+}
+
+// Add event listeners to all denomination inputs
+document.addEventListener('DOMContentLoaded', () => {
+    const fields = ['note500', 'note200', 'note100', 'note50', 'note20', 'note10', 'note5', 'coins'];
+    fields.forEach(id => {
+        document.getElementById(id)?.addEventListener('input', calculateTotalDenomination);
+    });
+});
         // Function to handle saving changes
         async function saveChanges(event) {
             event.preventDefault(); // Prevent default form submission
@@ -681,6 +710,7 @@
                 speedTestQuantity: getNumberValue('speedTestQuantity'),
                 petrolTestQuantity: getNumberValue('petrolTestQuantity'),
                 dieselTestQuantity: getNumberValue('dieselTestQuantity'),
+                totalDenomination: getNumberValue('totalDenomination'),
                 note500: getNumberValue('note500'),
                 note200: getNumberValue('note200'),
                 note100: getNumberValue('note100'),

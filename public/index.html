@@ -495,7 +495,7 @@ document.querySelectorAll('.denom-input').forEach(input => {
             loadDefaultReadings();
             fetchOilTypes();
             const defaultNames = ["GPAY", "CARD", "PAYTM"];
-            defaultNames.forEach(name => { addEntry('credit', name); addEntry('debit', name); });
+            defaultNames.forEach(name => { addEntry('credit', name); });
         });
 
         async function saveAndNavigate() {

@@ -500,8 +500,8 @@
 
         <div class="grid grid-cols-1 mt-8">
             <div>
-                <label for="totalAmount" class="block text-lg font-semibold text-gray-700 mb-2 text-center">Total Denomination Amount</label>
-                <input type="text" id="totalAmount"
+                <label for="totalDenomination" class="block text-lg font-semibold text-gray-700 mb-2 text-center">Total Denomination Amount</label>
+                <input type="text" id="totalDenomination"
                        class="w-full p-3 border border-gray-300 rounded-lg bg-yellow-100 text-yellow-800 text-center font-bold text-lg"
                        readonly placeholder="-" tabindex="-1">
             </div>
@@ -777,10 +777,10 @@
             const note5 = getNumberValue('note5');
             const coins = getNumberValue('coins');
 
-            const totalAmount = (note500 * 500) + (note200 * 200) +
+            const totalDenomination = (note500 * 500) + (note200 * 200) +
                                 (note100 * 100) + (note50 * 50) + (note20 * 20) +
                                 (note10 * 10) + (note5 * 5) + coins;
-            setOutputValue('totalAmount', totalAmount);
+            setOutputValue('totalDenomination', totalDenomination);
         }
 
 
@@ -816,7 +816,7 @@
 
         function calculateExcessShot() {
             const finalResult = getNumberValue('finalResult');
-            const totalDenominationAmount = getNumberValue('totalAmount');
+            const totalDenominationAmount = getNumberValue('totalDenomination');
             const excessShot = totalDenominationAmount - finalResult;
 
             const headingElement = document.getElementById('excessShotHeading');
@@ -871,7 +871,7 @@
                                 'dieselFirstReading4', 'dieselFirstReading5', 'dieselFirstReading6',
                                 'dieselSecondReading1', 'dieselSecondReading2', 'dieselSecondReading3','dieselSecondReading4', 'dieselSecondReading5', 'dieselSecondReading6',
                                 'petrolTestQuantity', 'dieselTestQuantity','speedTestQuantity',
-                                'note500', 'note200', 'note100', 'note50', 'note20', 'note10', 'note5', 'coins'
+                                'note500', 'note200', 'note100', 'note50', 'note20', 'note10', 'note5', 'coins','totalDenomination'
                             ];
 
                             inputIds.forEach(id => {
