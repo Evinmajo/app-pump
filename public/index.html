@@ -69,6 +69,17 @@
                 </select>
         </div>
 
+        <div class="mb-8">
+            <label for="shift" class="block text-lg font-semibold text-gray-700 mb-2 text-center">Shift</label>
+            <select id="shift" name="shift"
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center">
+                <option value="">--Select Shift--</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+            </select>
+        </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
             <div>
                 <label for="petrol" class="block text-lg font-semibold text-gray-700 mb-2 text-center">Petrol Price</label>
@@ -257,6 +268,16 @@
         </div>
 
         <hr class="my-8 border-t border-gray-300">
+        <div class="mb-6">
+            <h2 class="block text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Expenses</h2>
+            <div id="expenseEntriesContainer" class="space-y-3">
+                </div>
+            <button type="button" onclick="addEntry('expense')" class="mt-4 w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg text-md transition duration-300 ease-in-out">
+                Add Expense Entry
+            </button>
+        </div>
+
+        <hr class="my-8 border-t border-gray-300">
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
             <div class="col-span-1">
@@ -318,9 +339,17 @@
         let debitEntryCount = 0;
         let packedOilEntryCount = 0; 
         let availableOilTypes = []; 
+        let expenseEntryCount = 0;
 
         function addEntry(type, defaultName = '') {
-            const containerId = type === 'credit' ? 'creditEntriesContainer' : 'debitEntriesContainer';
+            let containerId;
+            if (type === 'credit') {
+                containerId = 'creditEntriesContainer';
+            } else if (type === 'debit') {
+                containerId = 'debitEntriesContainer';
+            } else {
+                containerId = 'expenseEntriesContainer'; // Added for expenses
+            }
             const container = document.getElementById(containerId);
             const entryDiv = document.createElement('div');
             entryDiv.className = 'flex items-center gap-x-2 mb-3';
@@ -342,8 +371,10 @@
 
             if (type === 'credit') {
                 nameInput.id = `creditName_dynamic_${creditEntryCount++}`;
-            } else {
+            } else if (type === 'debit') {
                 nameInput.id = `debitName_dynamic_${debitEntryCount++}`;
+            } else {
+                nameInput.id = `expenseName_dynamic_${expenseEntryCount++}`; // Added for expenses
             }
 
             entryDiv.appendChild(nameInput);
@@ -500,6 +531,12 @@ document.querySelectorAll('.denom-input').forEach(input => {
 
         async function saveAndNavigate() {
             const submitButton = document.querySelector('button[onclick="saveAndNavigate()"]');
+            const shift = document.getElementById('shift').value;
+
+            if (!shift) {
+                showMessageBox('Enter which shift.', 'error');
+                return; 
+            }
             
             const isNozzleValid = (secondId, firstId, label) => {
                 const first = parseFloat(document.getElementById(firstId).value) || 0;
@@ -550,6 +587,7 @@ document.querySelectorAll('.denom-input').forEach(input => {
             });
             data['totalAmount'] = parseFloat(document.getElementById('totalAmount').value) || 0;
             data['selectedId'] = document.getElementById('selectedId').value;
+            data['shift'] = shift;
             data['petrol'] = parseFloat(document.getElementById('petrol').value) || 0;
             data['diesel'] = parseFloat(document.getElementById('diesel').value) || 0;
             data['oil'] = parseFloat(document.getElementById('oil').value) || 0;
@@ -577,6 +615,7 @@ document.querySelectorAll('.denom-input').forEach(input => {
 
             data['creditEntries'] = getEntries('#creditEntriesContainer .flex');
             data['debitEntries'] = getEntries('#debitEntriesContainer .flex');
+            data['expenseEntries'] = getEntries('#expenseEntriesContainer .flex');
 
             for (const key in data) {
                 if (key !== 'currentDate' && key !== 'selectedId' && !Array.isArray(data[key])) {

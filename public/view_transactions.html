@@ -3,138 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>View Credit/Debit Transactions</title>
+    <title>View Transactions & Expenses</title>
     <link rel="icon" type="image/png" href="https://toppng.com/uploads/preview/indian-oil-corporation-vector-logo-11574259324ulqkuccpqn.png">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            margin: 0;
-            background-color: #eef2f7;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
+        /* Base Styles */
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            margin: 0; 
+            background-color: #eef2f7; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            min-height: 100vh; 
+            padding: 10px; /* Reduced base padding for mobile */
+            box-sizing: border-box; 
+        }
+
+        .container { 
+            background-color: #ffffff; 
+            padding: 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); 
+            max-width: 1000px; 
+            width: 100%; 
+            margin-bottom: 20px; 
+            border: 1px solid #e0e0e0; 
             box-sizing: border-box;
         }
-        .container {
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-            max-width: 1000px;
+
+        h1 { 
+            text-align: center; 
+            color: #2c3e50; 
+            margin-bottom: 25px; 
+            font-size: 1.8em; 
+        }
+
+        /* Filter Section Styling */
+        .filters { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 12px; 
+            margin-bottom: 20px; 
+            justify-content: center; 
+            align-items: flex-end; 
+        }
+
+        .filter-group { 
+            display: flex; 
+            flex-direction: column; 
+            min-width: 140px; 
+            flex: 1; 
+        }
+
+        .search-group { 
+            min-width: 100%; /* Search takes full width on small screens */
+            flex: 2; 
+        }
+
+        .filters label { 
+            font-size: 0.85em; 
+            color: #555; 
+            margin-bottom: 5px; 
+            font-weight: 700; 
+        }
+
+        .filters input, .filters select { 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 8px; 
+            font-size: 1em; 
             width: 100%;
-            margin-bottom: 20px;
-            border: 1px solid #e0e0e0;
+            box-sizing: border-box;
         }
-        h1 {
-            text-align: center;
-            color: #2c3e50;
-            margin-bottom: 35px;
-            font-size: 2.2em;
-            font-weight: 700;
+
+        #filterButton { 
+            background-color: #007bff; 
+            color: white; 
+            cursor: pointer; 
+            border: none; 
+            font-weight: 700; 
+            padding: 12px; 
+            border-radius: 8px; 
+            transition: background 0.3s; 
+            width: 100%; /* Full width on mobile */
+            height: 45px;
         }
-        .filters {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 25px;
-            justify-content: center;
-            align-items: flex-end; /* Align items to the bottom */
+
+        /* Transactions Section */
+        .transactions-section { 
+            background-color: #ffffff; 
+            padding: 15px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05); 
+            max-width: 1000px; 
+            width: 100%; 
+            border: 1px solid #e0e0e0; 
+            box-sizing: border-box;
         }
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-            min-width: 150px;
-            flex: 1;
+
+        .transaction-day { 
+            margin-bottom: 20px; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 10px; 
+            padding: 12px; 
+            background-color: #fdfdfd; 
         }
-        .filters label {
-            font-size: 0.9em;
-            color: #555;
-            margin-bottom: 5px;
-            font-weight: 700;
+
+        .transaction-day h3 { 
+            color: #2c3e50; 
+            margin: 0 0 12px 0; 
+            font-size: 1.2em; 
+            border-bottom: 2px solid #e0e0e0; 
+            padding-bottom: 8px; 
         }
-        .filters input, .filters select {
-            padding: 10px 12px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 1em;
-            color: #333;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+
+        .transaction-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 12px 8px; 
+            border-bottom: 1px dashed #eee; 
+            cursor: pointer; 
+            border-radius: 6px; 
+            font-size: 0.95em;
         }
-        .filters input:focus, .filters select:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
-            outline: none;
-        }
-        #filterButton {
-            background-color: #007bff;
-            color: white;
-            cursor: pointer;
-            border: none;
-            font-weight: 700;
-            padding: 12px 20px;
-            border-radius: 8px;
-            transition: background 0.3s;
-        }
-        #filterButton:hover {
-            background-color: #0056b3;
-        }
-        .transactions-section {
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
-            max-width: 1000px;
-            width: 100%;
-            border: 1px solid #e0e0e0;
-        }
-        .transaction-day {
-            margin-bottom: 25px;
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 15px;
-            background-color: #fdfdfd;
-        }
-        .transaction-day h3 {
-            color: #2c3e50;
-            margin-top: 0;
-            margin-bottom: 15px;
-            font-size: 1.5em;
-            border-bottom: 2px solid #e0e0e0;
-            padding-bottom: 10px;
-        }
-        .transaction-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px dashed #eee;
-        }
-        .transaction-item:last-child {
-            border-bottom: none;
-        }
+
+        .transaction-item:hover { background-color: #f0f7ff; }
+
         .credit { color: #28a745; font-weight: 700; }
         .debit { color: #dc3545; font-weight: 700; }
+        .expense { color: #f39c12; font-weight: 700; } 
+
         .no-data { text-align: center; color: #777; font-style: italic; padding: 20px; }
-        .transaction-summary {
-            background-color: #e9ecef;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-            text-align: center;
-            font-weight: 700;
-            color: #333;
-            display: none;
+
+        .transaction-summary { 
+            background-color: #e9ecef; 
+            padding: 20px; 
+            border-radius: 10px; 
+            margin-top: 20px; 
+            text-align: center; 
+            font-weight: 700; 
+            color: #333; 
+            display: none; 
+            line-height: 1.5;
+            font-size: 1em;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* --- RESPONSIVE MEDIA QUERIES --- */
+
+        /* Tablet and Desktop (min-width: 600px) */
+        @media (min-width: 600px) {
+            body { padding: 20px; }
+            .container { padding: 30px; }
+            h1 { font-size: 2.2em; }
+            .search-group { min-width: 250px; }
+            #filterButton { width: auto; padding: 0 25px; }
+            .transaction-day h3 { font-size: 1.5em; }
+            .transaction-item { font-size: 1em; padding: 10px 12px; }
+            .transaction-summary { font-size: 1.1em; }
+        }
+
+        /* Desktop specific adjustments */
+        @media (min-width: 900px) {
+            .filters { flex-direction: row; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>View Credit/Debit Transactions</h1>
-
+        <h1>Transaction Explorer</h1>
         <div class="filters">
             <div class="filter-group">
                 <label for="fromDate">From Date:</label>
@@ -145,173 +185,157 @@
                 <input type="date" id="toDate">
             </div>
             <div class="filter-group">
-                <label for="typeSelect">Transaction Type:</label>
-                <select id="typeSelect">
-                    <option value="both" selected>Credit & Debit</option>
-                    <option value="credit">Credit Only</option>
-                    <option value="debit">Debit Only</option>
+                <label for="staffSelect">Staff:</label>
+                <select id="staffSelect">
+                    <option value="">All Staff</option>
                 </select>
             </div>
             <div class="filter-group">
-                <label for="staffSelect">Staff:</label>
-                <select id="staffSelect"></select>
+                <label for="typeSelect">Type:</label>
+                <select id="typeSelect">
+                    <option value="all">All (Cr/Dr)</option>
+                    <option value="credit">Credits Only</option>
+                    <option value="debit">Debits Only</option>
+                    <option value="expense">Expenses Only</option>
+                </select>
             </div>
-            <div class="filter-group">
-                <label for="partyName">Party Name:</label>
-                <input type="text" id="partyName" placeholder="Search party...">
+            <div class="filter-group search-group">
+                <label for="searchInput">Search Party Name:</label>
+                <input type="text" id="searchInput" placeholder="Type or click item..." onkeyup="fetchTransactions()">
             </div>
-            <button id="filterButton">Apply Filters</button>
+            <button id="filterButton">Refresh</button>
         </div>
-    </div>
 
-    <div class="transactions-section">
-        <div id="transactionsDisplay">
-            <p class="no-data">Select filters and click "Apply Filters" to view transactions.</p>
+        <div class="transactions-section" id="transactionsDisplay">
+            <p class="no-data">Select dates to view records.</p>
         </div>
-        <div id="transactionSummary" class="transaction-summary"></div>
+
+        <div class="transaction-summary" id="transactionSummary"></div>
     </div>
 
     <script>
         const fromDateInput = document.getElementById('fromDate');
         const toDateInput = document.getElementById('toDate');
-        const typeSelect = document.getElementById('typeSelect');
         const staffSelect = document.getElementById('staffSelect');
-        const partyNameInput = document.getElementById('partyName');
+        const typeSelect = document.getElementById('typeSelect');
+        const searchInput = document.getElementById('searchInput');
         const filterButton = document.getElementById('filterButton');
         const transactionsDisplay = document.getElementById('transactionsDisplay');
         const transactionSummary = document.getElementById('transactionSummary');
 
         async function populateStaffDropdown() {
-            staffSelect.innerHTML = '<option value="">All Staff</option>';
             try {
                 const response = await fetch('/api/staff');
-                if (response.ok) {
-                    const staffData = await response.json();
-                    staffData.forEach(staff => {
-                        const option = document.createElement('option');
-                        option.value = staff.staffId;
-                        option.textContent = `${staff.name} (${staff.staffId})`;
-                        staffSelect.appendChild(option);
-                    });
-                }
-            } catch (error) {
-                console.error('Error fetching staff:', error);
-            }
+                if (!response.ok) throw new Error('Failed to fetch staff');
+                const staffList = await response.json();
+                staffList.forEach(staff => {
+                    const option = document.createElement('option');
+                    option.value = staff.staffId;
+                    option.textContent = staff.name;
+                    staffSelect.appendChild(option);
+                });
+            } catch (error) { console.error("Staff Error:", error); }
+        }
+
+        // Search Bar Functionality: Clicking a row fills the search bar
+        function quickSearch(name) {
+            searchInput.value = name;
+            fetchTransactions();
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll back up to see filters on mobile
         }
 
         async function fetchTransactions() {
-            transactionsDisplay.innerHTML = '';
-            transactionSummary.style.display = 'none';
-            
             const fromDate = fromDateInput.value;
             const toDate = toDateInput.value;
             const staffId = staffSelect.value;
-            const partyName = partyNameInput.value.trim();
-            const selectedType = typeSelect.value;
+            const filterType = typeSelect.value;
+            const searchTerm = searchInput.value.toLowerCase();
 
-            if (!fromDate || !toDate) {
-                transactionsDisplay.innerHTML = '<p class="no-data">Please select both dates.</p>';
-                return;
-            }
+            if (!fromDate || !toDate) return;
 
             try {
-                const queryParams = new URLSearchParams({ fromDate, toDate });
-                if (staffId) queryParams.append('staffId', staffId);
-                if (partyName) queryParams.append('partyName', partyName);
+                // Hits the existing /api/transactions/creditDebit route
+                const response = await fetch(`/api/transactions/creditDebit?fromDate=${fromDate}&toDate=${toDate}&staffId=${staffId}`);
+                if (!response.ok) throw new Error('Server Error');
 
-                const response = await fetch(`/api/transactions/creditDebit?${queryParams.toString()}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    displayTransactions(data, selectedType);
+                const data = await response.json();
+                transactionsDisplay.innerHTML = "";
+                let totalCredit = 0, totalDebit = 0, totalExpense = 0;
+                let hasAnyData = false;
+
+                for (const date in data) {
+                    const dayData = data[date];
+                    let dateHTML = `<div class="transaction-day"><h3>${date}</h3>`;
+                    let hasDailyData = false;
+
+                    const process = (entries, label, cssClass) => {
+                        if (!entries || !Array.isArray(entries)) return;
+                        entries.forEach(entry => {
+                            const entryName = entry.name || 'Unnamed';
+                            
+                            // LOGIC: All view shows only Credit and Debit
+                            const isAllType = filterType === 'all' && (cssClass === 'credit' || cssClass === 'debit');
+                            const isSpecificType = filterType === cssClass;
+                            const matchesSearch = entryName.toLowerCase().includes(searchTerm);
+
+                            if ((isAllType || isSpecificType) && matchesSearch) {
+                                const amount = parseFloat(entry.amount) || 0;
+                                dateHTML += `
+                                    <div class="transaction-item" onclick="quickSearch('${entryName.replace(/'/g, "\\'")}')">
+                                        <span><strong>${entryName}</strong><br><small>(${label})</small></span>
+                                        <span class="${cssClass}">₹${amount.toFixed(2)}</span>
+                                    </div>`;
+                                
+                                if (cssClass === 'credit') totalCredit += amount;
+                                if (cssClass === 'debit') totalDebit += amount;
+                                if (cssClass === 'expense') totalExpense += amount;
+                                
+                                hasDailyData = true;
+                                hasAnyData = true;
+                            }
+                        });
+                    };
+
+                    process(dayData.credits, 'Credit', 'credit');
+                    process(dayData.debits, 'Debit', 'debit');
+                    process(dayData.expenseEntries, 'Expense', 'expense');
+
+                    dateHTML += `</div>`;
+                    if (hasDailyData) transactionsDisplay.innerHTML += dateHTML;
+                }
+
+                if (!hasAnyData) {
+                    transactionsDisplay.innerHTML = '<p class="no-data">No matching records found.</p>';
+                    transactionSummary.style.display = 'none';
+                    return;
+                }
+
+                transactionSummary.style.display = 'block';
+                if (filterType === 'all') {
+                    transactionSummary.innerHTML = `
+                        Cr: ₹${totalCredit.toFixed(2)} | Dr: ₹${totalDebit.toFixed(2)}
+                        <br><span style="color: #2c3e50;">Net Total (Cr - Dr): ₹${(totalCredit - totalDebit).toFixed(2)}</span>`;
+                } else if (filterType === 'expense') {
+                    transactionSummary.innerHTML = `Total Expenses: ₹${totalExpense.toFixed(2)}`;
                 } else {
-                    transactionsDisplay.innerHTML = '<p class="no-data">Failed to load data.</p>';
+                    const total = (filterType === 'credit') ? totalCredit : totalDebit;
+                    transactionSummary.innerHTML = `Total ${filterType.charAt(0).toUpperCase() + filterType.slice(1)}s: ₹${total.toFixed(2)}`;
                 }
+
             } catch (error) {
-                console.error('Error:', error);
-                transactionsDisplay.innerHTML = '<p class="no-data">An error occurred.</p>';
+                transactionsDisplay.innerHTML = `<p class="no-data" style="color:red;">Error fetching data.</p>`;
             }
-        }
-
-        function displayTransactions(data, filterType) {
-            transactionsDisplay.innerHTML = '';
-            let totalCredit = 0;
-            let totalDebit = 0;
-            let hasAnyData = false;
-
-            const dates = Object.keys(data).sort((a, b) => new Date(a) - new Date(b));
-
-            dates.forEach(date => {
-                const dayData = data[date];
-                const dayDiv = document.createElement('div');
-                dayDiv.classList.add('transaction-day');
-                
-                let dayContent = `<h3>Transactions on ${new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</h3>`;
-                let dayHasTransactions = false;
-
-                // Process Credits
-                if ((filterType === 'both' || filterType === 'credit') && dayData.credits.length > 0) {
-                    dayContent += '<p><strong>Credits:</strong></p>';
-                    dayData.credits.forEach(credit => {
-                        dayContent += `
-                            <div class="transaction-item credit">
-                                <span><span class="type"></span> <span class="party">${credit.name}</span></span>
-                                <span class="amount">₹${credit.amount.toFixed(2)}</span>
-                            </div>`;
-                        totalCredit += credit.amount;
-                    });
-                    dayHasTransactions = true;
-                }
-
-                // Process Debits
-                if ((filterType === 'both' || filterType === 'debit') && dayData.debits.length > 0) {
-                    dayContent += '<p><strong>Debits:</strong></p>';
-                    dayData.debits.forEach(debit => {
-                        dayContent += `
-                            <div class="transaction-item debit">
-                                <span><span class="type"></span> <span class="party">${debit.name}</span></span>
-                                <span class="amount">₹${debit.amount.toFixed(2)}</span>
-                            </div>`;
-                        totalDebit += debit.amount;
-                    });
-                    dayHasTransactions = true;
-                }
-
-                if (dayHasTransactions) {
-                    dayDiv.innerHTML = dayContent;
-                    transactionsDisplay.appendChild(dayDiv);
-                    hasAnyData = true;
-                }
-            });
-
-            if (!hasAnyData) {
-                transactionsDisplay.innerHTML = '<p class="no-data">No matching transactions found.</p>';
-                return;
-            }
-
-            // Update Summary based on selection
-            let summaryHTML = "";
-            if (filterType === 'credit') {
-                summaryHTML = `Total Credits: ₹${totalCredit.toFixed(2)}`;
-            } else if (filterType === 'debit') {
-                summaryHTML = `Total Debits: ₹${totalDebit.toFixed(2)}`;
-            } else {
-                summaryHTML = `Total Credits: ₹${totalCredit.toFixed(2)} | Total Debits: ₹${totalDebit.toFixed(2)}
-                               <br>Net Amount: ₹${(totalCredit - totalDebit).toFixed(2)}`;
-            }
-            
-            transactionSummary.innerHTML = summaryHTML;
-            transactionSummary.style.display = 'block';
         }
 
         filterButton.addEventListener('click', fetchTransactions);
+        typeSelect.addEventListener('change', fetchTransactions);
+        staffSelect.addEventListener('change', fetchTransactions);
 
         document.addEventListener('DOMContentLoaded', () => {
             populateStaffDropdown();
             const today = new Date();
-            const sevenDaysAgo = new Date(today);
-            sevenDaysAgo.setDate(today.getDate() - 7);
-            fromDateInput.value = sevenDaysAgo.toISOString().split('T')[0];
-            toDateInput.value = today.toISOString().split('T')[0];
+            fromDateInput.value = new Date(today.setDate(today.getDate() - 7)).toISOString().split('T')[0];
+            toDateInput.value = new Date().toISOString().split('T')[0];
             fetchTransactions();
         });
     </script>

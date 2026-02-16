@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Staff Denomination Report</title>
-    <script src="./style.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script> 
     <style>
-        /* Styling inspired by view_transactions.html */
         .date-header {
             background-color: #f3f4f6;
             font-weight: bold;
@@ -14,56 +14,71 @@
         .transaction-row:hover {
             background-color: #f9fafb;
         }
+        /* Ensures the table is scrollable on very small screens without breaking the card */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        /* Custom scrollbar for better UX */
+        .table-responsive::-webkit-scrollbar {
+            height: 6px;
+        }
+        .table-responsive::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
     </style>
 </head>
-<body class="bg-gray-100 p-10">
-    <div class="max-w-4xl mx-auto bg-white p-8 rounded shadow">
-        <h1 class="text-2xl font-bold mb-6 text-gray-800">Staff Daily Denomination Report</h1>
+<body class="bg-gray-100 p-4 md:p-10">
+    <div class="max-w-4xl mx-auto bg-white p-5 md:p-8 rounded shadow-lg">
+        <h1 class="text-xl md:text-2xl font-bold mb-6 text-gray-800 border-b pb-4">Staff Daily Denomination Report</h1>
         
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 items-end">
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Staff Member</label>
-                <select id="staffSelect" class="w-full border p-2 rounded focus:ring-blue-500 focus:border-blue-500">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8 items-end">
+            <div class="flex flex-col">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Staff Member</label>
+                <select id="staffSelect" class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
                     <option value="">All Staff</option>
                 </select>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">From Date</label>
-                <input type="date" id="fromDate" class="w-full border p-2 rounded">
+            <div class="flex flex-col">
+                <label class="block text-sm font-medium text-gray-700 mb-1">From Date</label>
+                <input type="date" id="fromDate" class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">To Date</label>
-                <input type="date" id="toDate" class="w-full border p-2 rounded">
+            <div class="flex flex-col">
+                <label class="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+                <input type="date" id="toDate" class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
-            <button onclick="fetchReport()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded h-10 transition">
+            <button onclick="fetchReport()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded h-10 transition shadow-sm active:transform active:scale-95">
                 Search
             </button>
         </div>
 
-        <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="bg-gray-200 text-gray-700">
-                    <th class="border p-3">Details</th>
-                    <th class="border p-3">Staff Name</th>
-                    <th class="border p-3 text-right">Collection Amount</th>
-                </tr>
-            </thead>
-            <tbody id="reportContent" class="text-gray-600">
-                <tr>
-                    <td colspan="3" class="p-3 text-center italic text-gray-400">Select dates and click search...</td>
-                </tr>
-            </tbody>
-            <tfoot id="reportFooter" class="hidden">
-                <tr class="bg-blue-50 font-bold">
-                    <td colspan="2" class="border p-3 text-right text-gray-800 text-lg uppercase tracking-wider">Grand Total:</td>
-                    <td id="grandTotal" class="border p-3 text-right text-blue-700 text-xl">₹0.00</td>
-                </tr>
-            </tfoot>
-        </table>
+        <div class="table-responsive border rounded-lg">
+            <table class="w-full text-left border-collapse min-w-[500px]">
+                <thead>
+                    <tr class="bg-gray-200 text-gray-700">
+                        <th class="border-b p-3 text-sm uppercase tracking-wider">Details</th>
+                        <th class="border-b p-3 text-sm uppercase tracking-wider">Staff Name</th>
+                        <th class="border-b p-3 text-sm uppercase tracking-wider text-right">Collection</th>
+                    </tr>
+                </thead>
+                <tbody id="reportContent" class="text-gray-600">
+                    <tr>
+                        <td colspan="3" class="p-8 text-center italic text-gray-400">Select dates and click search...</td>
+                    </tr>
+                </tbody>
+                <tfoot id="reportFooter" class="hidden">
+                    <tr class="bg-blue-50 font-bold">
+                        <td colspan="2" class="border-t p-4 text-right text-gray-800 text-base md:text-lg uppercase">Grand Total:</td>
+                        <td id="grandTotal" class="border-t p-4 text-right text-blue-700 text-lg md:text-xl">₹0.00</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
     </div>
 
     <script>
-        // Populate staff dropdown on load (similar to view_transactions.html logic)
+        // Your existing JS logic remains identical
         async function populateStaffDropdown() {
             const staffSelect = document.getElementById('staffSelect');
             try {
@@ -80,6 +95,12 @@
             }
         }
 
+        function setDefaultDates() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('fromDate').value = today;
+    document.getElementById('toDate').value = today;
+}
+
         async function fetchReport() {
             const from = document.getElementById('fromDate').value;
             const to = document.getElementById('toDate').value;
@@ -95,13 +116,12 @@
                 const footer = document.getElementById('reportFooter');
                 const grandTotalEl = document.getElementById('grandTotal');
 
-                if (!data || Object.keys(data).length === 0 || data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="3" class="p-3 text-center">No records found for this period</td></tr>';
+                if (!data || Object.keys(data).length === 0 || (Array.isArray(data) && data.length === 0)) {
+                    tbody.innerHTML = '<tr><td colspan="3" class="p-10 text-center">No records found for this period</td></tr>';
                     footer.classList.add('hidden');
                     return;
                 }
 
-                // If backend returns a flat array, we group it by date manually to match view_transactions.html style
                 const groupedData = Array.isArray(data) ? data.reduce((acc, curr) => {
                     const date = curr.date;
                     if (!acc[date]) acc[date] = [];
@@ -112,33 +132,30 @@
                 let totalSum = 0;
                 let html = '';
 
-                // Iterate through dates to create grouped view
                 Object.keys(groupedData).sort((a, b) => new Date(b) - new Date(a)).forEach(date => {
-                    // Date Header Row
                     html += `
                         <tr class="date-header">
-                            <td colspan="3" class="p-3 border text-blue-900 bg-blue-50">
-                                ${new Date(date).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                            <td colspan="3" class="p-3 border-y text-blue-900 bg-blue-50 text-sm font-bold">
+                                ${new Date(date).toLocaleDateString('en-IN', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
                             </td>
                         </tr>
                     `;
 
-                    // Individual Records for that date
                     groupedData[date].forEach(row => {
                         const amount = parseFloat(row.totalDenomination) || 0;
                         totalSum += amount;
                         html += `
                             <tr class="transaction-row border-b hover:bg-gray-50">
-                                <td class="p-3 border text-gray-400 text-sm italic italic">Collection Entry</td>
-                                <td class="p-3 border font-medium text-gray-800">${row.name}</td>
-                                <td class="p-3 border text-right font-bold text-green-700">₹${amount.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                                <td class="p-3 text-gray-400 text-xs italic">Collection Entry</td>
+                                <td class="p-3 font-medium text-gray-800">${row.name}</td>
+                                <td class="p-3 text-right font-bold text-green-700">₹${amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                             </tr>
                         `;
                     });
                 });
 
                 tbody.innerHTML = html;
-                grandTotalEl.innerText = `₹${totalSum.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                grandTotalEl.innerText = `₹${totalSum.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
                 footer.classList.remove('hidden');
 
             } catch (error) {
@@ -147,7 +164,10 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', populateStaffDropdown);
+        document.addEventListener('DOMContentLoaded', () => {
+            populateStaffDropdown();
+            setDefaultDates();
+        });
     </script>
 </body>
 </html>

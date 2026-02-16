@@ -3,156 +3,306 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Machine Readings & Totals</title>
+    <title>Shift-Wise Machine Readings</title>
     <script src="./style.js"></script>
     <style>
         .overflow-x-auto::-webkit-scrollbar { height: 6px; }
         .overflow-x-auto::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
-        /* Increased min-width to 2000px to accommodate Oil columns */
-        table { min-width: 2000px; }
+        table { min-width: 2400px; margin-bottom: 2rem; }
+        .shift-header { 
+            background: #1e40af; 
+            color: white; 
+            padding: 10px 20px; 
+            border-radius: 8px 8px 0 0; 
+            font-size: 1.25rem; 
+            font-weight: bold;
+            display: inline-block;
+        }
     </style>
 </head>
 <body class="bg-gray-100 p-2 md:p-8">
     <div class="max-w-full mx-auto bg-white rounded-xl shadow-md p-4 md:p-6">
-        <h1 class="text-xl md:text-2xl font-bold text-gray-800 mb-6 text-center">Fuel & Speed Report (P-6, D-6, S-3, Oil)</h1>
-        
-        <div class="mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 bg-blue-50 p-4 rounded-lg border border-blue-100">
-            <div class="flex items-center gap-3 w-full sm:w-auto">
-                <label for="dateSearch" class="font-semibold text-blue-800 whitespace-nowrap">Filter Date:</label>
-                <input type="date" id="dateSearch" onchange="filterTable()" 
-                       class="w-full sm:w-auto p-2 border border-blue-300 rounded-md outline-none focus:ring-2 focus:ring-blue-500">
+        <h1 class="text-xl md:text-2xl font-bold text-gray-800 mb-6 text-center underline decoration-blue-500">
+            Shift-Wise Product Sales Report
+        </h1>
+
+        <div class="mb-8 flex flex-wrap gap-4 items-center justify-center bg-blue-50 p-4 rounded-lg border border-blue-100">
+            <div class="flex flex-col">
+                <label class="text-sm font-semibold text-gray-600 mb-1">Filter by Date:</label>
+                <input type="date" id="dateSearch" onchange="filterData()" 
+                    class="border-2 border-blue-300 rounded-md p-2 focus:outline-none focus:border-blue-500">
             </div>
-            <button onclick="resetFilter()" class="w-full sm:w-auto bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition">
-                Show All Records
+            <button onclick="resetFilter()" class="mt-5 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition">
+                Reset View
             </button>
         </div>
 
-        <div class="overflow-x-auto rounded-lg border border-gray-200">
-            <table class="w-full text-[10px] md:text-xs text-left border-collapse">
-                <thead class="bg-gray-100 text-gray-700 sticky top-0">
-                    <tr>
-                        <th class="border p-2 text-center" rowspan="3">Date</th>
-                        <th class="border p-2 text-center" rowspan="3">Staff</th>
-                        <th class="border p-2 text-center bg-orange-50" colspan="12">Petrol Readings (M1-M6)</th>
-                        <th class="border p-2 text-center bg-blue-50" colspan="12">Diesel Readings (M1-M6)</th>
-                        <th class="border p-2 text-center bg-purple-50" colspan="6">Speed Readings (M1-M3)</th>
-                        <th class="border p-2 text-center bg-yellow-50" colspan="2">Oil Reading</th>
-                        <th class="border p-2 text-center bg-green-50" colspan="4">Total Sold (L)</th>
-                    </tr>
-                    <tr>
-                        <th class="border p-1 text-center bg-orange-100" colspan="2">M1</th><th class="border p-1 text-center bg-orange-100" colspan="2">M2</th><th class="border p-1 text-center bg-orange-100" colspan="2">M3</th>
-                        <th class="border p-1 text-center bg-orange-100" colspan="2">M4</th><th class="border p-1 text-center bg-orange-100" colspan="2">M5</th><th class="border p-1 text-center bg-orange-100" colspan="2">M6</th>
-                        <th class="border p-1 text-center bg-blue-100" colspan="2">M1</th><th class="border p-1 text-center bg-blue-100" colspan="2">M2</th><th class="border p-1 text-center bg-blue-100" colspan="2">M3</th>
-                        <th class="border p-1 text-center bg-blue-100" colspan="2">M4</th><th class="border p-1 text-center bg-blue-100" colspan="2">M5</th><th class="border p-1 text-center bg-blue-100" colspan="2">M6</th>
-                        <th class="border p-1 text-center bg-purple-100" colspan="2">M1</th><th class="border p-1 text-center bg-purple-100" colspan="2">M2</th><th class="border p-1 text-center bg-purple-100" colspan="2">M3</th>
-                        <th class="border p-1 text-center bg-yellow-100" colspan="2">Oil</th>
-                        <th class="border p-1 text-center bg-green-100" rowspan="2">Petrol</th>
-                        <th class="border p-1 text-center bg-green-100" rowspan="2">Diesel</th>
-                        <th class="border p-1 text-center bg-green-100" rowspan="2">Speed</th>
-                        <th class="border p-1 text-center bg-green-100" rowspan="2">Oil</th>
-                    </tr>
-                    <tr>
-                        <th class="border p-1 bg-orange-50 text-center">1st</th><th class="border p-1 bg-orange-50 text-center">2nd</th><th class="border p-1 bg-orange-50 text-center">1st</th><th class="border p-1 bg-orange-50 text-center">2nd</th><th class="border p-1 bg-orange-50 text-center">1st</th><th class="border p-1 bg-orange-50 text-center">2nd</th>
-                        <th class="border p-1 bg-orange-50 text-center">1st</th><th class="border p-1 bg-orange-50 text-center">2nd</th><th class="border p-1 bg-orange-50 text-center">1st</th><th class="border p-1 bg-orange-50 text-center">2nd</th><th class="border p-1 bg-orange-50 text-center">1st</th><th class="border p-1 bg-orange-50 text-center">2nd</th>
-                        <th class="border p-1 bg-blue-50 text-center">1st</th><th class="border p-1 bg-blue-50 text-center">2nd</th><th class="border p-1 bg-blue-50 text-center">1st</th><th class="border p-1 bg-blue-50 text-center">2nd</th><th class="border p-1 bg-blue-50 text-center">1st</th><th class="border p-1 bg-blue-50 text-center">2nd</th>
-                        <th class="border p-1 bg-blue-50 text-center">1st</th><th class="border p-1 bg-blue-50 text-center">2nd</th><th class="border p-1 bg-blue-50 text-center">1st</th><th class="border p-1 bg-blue-50 text-center">2nd</th><th class="border p-1 bg-blue-50 text-center">1st</th><th class="border p-1 bg-blue-50 text-center">2nd</th>
-                        <th class="border p-1 bg-purple-50 text-center">1st</th><th class="border p-1 bg-purple-50 text-center">2nd</th><th class="border p-1 bg-purple-50 text-center">1st</th><th class="border p-1 bg-purple-50 text-center">2nd</th><th class="border p-1 bg-purple-50 text-center">1st</th><th class="border p-1 bg-purple-50 text-center">2nd</th>
-                        <th class="border p-1 bg-yellow-50 text-center">1st</th><th class="border p-1 bg-yellow-50 text-center">2nd</th>
-                    </tr>
-                </thead>
-                <tbody id="diffTableBody" class="bg-white"></tbody>
-                <tfoot class="bg-gray-900 text-white font-bold">
-                    <tr>
-                        <td class="border p-3 text-center" colspan="34">GRAND TOTAL</td>
-                        <td id="grandTotalPetrol" class="border p-3 text-right text-orange-400">0.00</td>
-                        <td id="grandTotalDiesel" class="border p-3 text-right text-blue-400">0.00</td>
-                        <td id="grandTotalSpeed" class="border p-3 text-right text-purple-400">0.00</td>
-                        <td id="grandTotalOil" class="border p-3 text-right text-yellow-400">0.00</td>
-                    </tr>
-                </tfoot>
-            </table>
+        <div id="tablesWrapper"></div>
+        <div id="noDataMessage" class="hidden text-center py-20 text-gray-500 text-xl font-medium">
+            No readings found for the selected date.
         </div>
-        <div id="noDataMessage" class="hidden text-center py-12 text-gray-500 text-lg font-semibold">No records found for this date.</div>
     </div>
 
     <script>
         let allReadings = [];
+        let staffMap = {};
 
-        async function loadData() {
+        async function loadReadings() {
             try {
+                const staffResponse = await fetch('/api/staff');
+                const staffData = await staffResponse.json();
+                staffData.forEach(s => { staffMap[s.staffId] = s.name; });
+
                 const response = await fetch('/api/readings');
                 allReadings = await response.json();
-                renderTable(allReadings);
-            } catch (err) { console.error("Fetch Error:", err); }
+                renderShiftWiseTables(allReadings);
+            } catch (error) {
+                console.error('Fetch error:', error);
+            }
         }
 
-        function renderTable(data) {
-            const container = document.getElementById('diffTableBody');
-            container.innerHTML = '';
-            let totalP = 0, totalD = 0, totalS = 0, totalO = 0;
+        function renderShiftWiseTables(data) {
+            const wrapper = document.getElementById('tablesWrapper');
+            wrapper.innerHTML = '';
+            if (data.length === 0) return;
 
+            const grouped = data.reduce((acc, curr) => {
+                const shiftName = curr.shift || 'Unassigned';
+                if (!acc[shiftName]) acc[shiftName] = [];
+                acc[shiftName].push(curr);
+                return acc;
+            }, {});
+
+            Object.keys(grouped).forEach(shiftName => {
+                const shiftData = grouped[shiftName];
+                
+                // 1. Calculate Cash Summary for this specific shift
+                const sSum = shiftData.reduce((acc, r) => {
+                    const netP = ((r.secondReading1 - r.firstReading1) + (r.secondReading2 - r.firstReading2) + (r.secondReading3 - r.firstReading3) + (r.secondReading4 - r.firstReading4) + (r.secondReading5 - r.firstReading5) + (r.secondReading6 - r.firstReading6)) - (r.petrolTestQuantity || 0);
+                    const netD = ((r.dieselSecondReading1 - r.dieselFirstReading1) + (r.dieselSecondReading2 - r.dieselFirstReading2) + (r.dieselSecondReading3 - r.dieselFirstReading3) + (r.dieselSecondReading4 - r.dieselFirstReading4) + (r.dieselSecondReading5 - r.dieselFirstReading5) + (r.dieselSecondReading6 - r.dieselFirstReading6)) - (r.dieselTestQuantity || 0);
+                    const netS = ((r.speedSecondReading1 - r.speedFirstReading1) + (r.speedSecondReading2 - r.speedFirstReading2) + (r.speedSecondReading3 - r.speedFirstReading3)) - (r.speedTestQuantity || 0);
+                    const netO = (Number(r.oilFirstReading) || 0) - (Number(r.oilSecondReading) || 0);
+
+                    acc.pVal += netP * (Number(r.petrol) || 0);
+                    acc.dVal += netD * (Number(r.diesel) || 0);
+                    acc.sVal += netS * (Number(r.speed) || 0);
+                    acc.oVal += netO * (Number(r.oil) || 0);
+                    return acc;
+                }, { pVal:0, dVal:0, sVal:0, oVal:0 });
+
+                const totalShiftRevenue = sSum.pVal + sSum.dVal + sSum.sVal + sSum.oVal;
+
+                const section = document.createElement('div');
+                section.className = "mb-10";
+                section.innerHTML = `
+                    <div class="shift-header">${shiftName} Shift</div>
+                    <div class="overflow-x-auto rounded-b-lg border border-gray-200">
+                        <table class="w-full text-[10px] md:text-xs text-left border-collapse">
+                            ${getTableHead()}
+                            <tbody id="body-${shiftName}"></tbody>
+                            ${getTableFoot(shiftData)}
+                        </table>
+                    </div>
+                    
+                    <div class="mt-2 p-4 bg-blue-50 border-x border-b border-blue-200 rounded-b-lg shadow-sm">
+                        <h3 class="text-sm font-bold text-blue-800 mb-3 uppercase tracking-wider">Shift Cash Summary (Net Sold × Rate)</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                            <div class="bg-white p-2 rounded border border-orange-200">
+                                <p class="text-[10px] font-bold text-orange-600 uppercase">Petrol</p>
+                                <p class="text-sm font-black">₹${sSum.pVal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+                            </div>
+                            <div class="bg-white p-2 rounded border border-blue-200">
+                                <p class="text-[10px] font-bold text-blue-600 uppercase">Diesel</p>
+                                <p class="text-sm font-black">₹${sSum.dVal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+                            </div>
+                            <div class="bg-white p-2 rounded border border-purple-200">
+                                <p class="text-[10px] font-bold text-purple-600 uppercase">Speed</p>
+                                <p class="text-sm font-black">₹${sSum.sVal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+                            </div>
+                            <div class="bg-white p-2 rounded border border-yellow-200">
+                                <p class="text-[10px] font-bold text-yellow-600 uppercase">Oil</p>
+                                <p class="text-sm font-black">₹${sSum.oVal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 text-right border-t border-blue-200 pt-2 font-black text-blue-900 text-lg">
+                            Shift Total: ₹${totalShiftRevenue.toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                        </div>
+                    </div>
+                `;
+                wrapper.appendChild(section);
+                renderRows(shiftData, `body-${shiftName}`);
+            });
+
+            renderDaySummary(data);
+        }
+
+        function getTableHead() {
+            return `
+                <thead class="bg-gray-100 text-gray-700 sticky top-0">
+                    <tr>
+                        <th class="border p-2 text-center" rowspan="3">Date</th>
+                        <th class="border p-2 text-center" rowspan="3">Staff</th>
+                        <th class="border p-2 text-center bg-orange-50" colspan="12">Petrol Readings (MS1-MS6)</th>
+                        <th class="border p-2 text-center bg-blue-50" colspan="12">Diesel Readings (HSD1-HSD6)</th>
+                        <th class="border p-2 text-center bg-purple-50" colspan="6">Speed Readings (3A-4A)</th>
+                        <th class="border p-2 text-center bg-yellow-50" colspan="2">Oil</th>
+                        <th class="border p-2 text-center bg-green-50" colspan="3">Gross Sold (L)</th>
+                        <th class="border p-2 text-center bg-green-100" colspan="4">Net Sold (L)</th>
+                    </tr>
+                    <tr>
+                        <th class="border p-1 text-center bg-orange-100" colspan="2">MS1</th><th class="border p-1 text-center bg-orange-100" colspan="2">MS2</th><th class="border p-1 text-center bg-orange-100" colspan="2">MS3</th>
+                        <th class="border p-1 text-center bg-orange-100" colspan="2">MS4</th><th class="border p-1 text-center bg-orange-100" colspan="2">MS5</th><th class="border p-1 text-center bg-orange-100" colspan="2">MS6</th>
+                        <th class="border p-1 text-center bg-blue-100" colspan="2">HSD1</th><th class="border p-1 text-center bg-blue-100" colspan="2">HSD2</th><th class="border p-1 text-center bg-blue-100" colspan="2">HSD3</th>
+                        <th class="border p-1 text-center bg-blue-100" colspan="2">HSD4</th><th class="border p-1 text-center bg-blue-100" colspan="2">HSD5</th><th class="border p-1 text-center bg-blue-100" colspan="2">HSD6</th>
+                        <th class="border p-1 text-center bg-purple-100" colspan="2">3A</th><th class="border p-1 text-center bg-purple-100" colspan="2">4A</th><th class="border p-1 text-center bg-purple-100" colspan="2">5A</th>
+                        <th class="border p-1 text-center bg-yellow-100" colspan="2">Oil</th>
+                        <th class="border p-1 text-center bg-green-50" rowspan="2">Petrol</th><th class="border p-1 text-center bg-green-50" rowspan="2">Diesel</th><th class="border p-1 text-center bg-green-50" rowspan="2">Speed</th>
+                        <th class="border p-1 text-center bg-green-100" rowspan="2">Petrol</th><th class="border p-1 text-center bg-green-100" rowspan="2">Diesel</th><th class="border p-1 text-center bg-green-100" rowspan="2">Speed</th><th class="border p-1 text-center bg-green-100" rowspan="2">Oil</th>
+                    </tr>
+                    <tr>
+                        ${Array(15).fill('<th class="border p-1 text-center">1st</th><th class="border p-1 text-center">2nd</th>').join('')}
+                    </tr>
+                </thead>`;
+        }
+
+        function renderRows(data, bodyId) {
+            const container = document.getElementById(bodyId);
             data.forEach(r => {
-                const diffP = (Number(r.secondReading1||0)-Number(r.firstReading1||0)) + (Number(r.secondReading2||0)-Number(r.firstReading2||0)) + (Number(r.secondReading3||0)-Number(r.firstReading3||0)) +
-                              (Number(r.secondReading4||0)-Number(r.firstReading4||0)) + (Number(r.secondReading5||0)-Number(r.firstReading5||0)) + (Number(r.secondReading6||0)-Number(r.firstReading6||0));
-                
-                const diffD = (Number(r.dieselSecondReading1||0)-Number(r.dieselFirstReading1||0)) + (Number(r.dieselSecondReading2||0)-Number(r.dieselFirstReading2||0)) + (Number(r.dieselSecondReading3||0)-Number(r.dieselFirstReading3||0)) +
-                              (Number(r.dieselSecondReading4||0)-Number(r.dieselFirstReading4||0)) + (Number(r.dieselSecondReading5||0)-Number(r.dieselFirstReading5||0)) + (Number(r.dieselSecondReading6||0)-Number(r.dieselFirstReading6||0));
-                
-                const diffS = (Number(r.speedSecondReading1||0)-Number(r.speedFirstReading1||0)) + (Number(r.speedSecondReading2||0)-Number(r.speedFirstReading2||0)) + (Number(r.speedSecondReading3||0)-Number(r.speedFirstReading3||0));
+                const staffName = staffMap[r.selectedId] || r.selectedId;
+                const val = (f, s) => (f === s ? '' : f);
+                const val2 = (f, s) => (f === s ? '' : s);
 
-                // Calculation for Oil Difference: (First - Second) based on server logic
-                const diffO = (Number(r.oilFirstReading || 0) - Number(r.oilSecondReading || 0));
-
-                totalP += diffP; totalD += diffD; totalS += diffS; totalO += diffO;
+                const gp = (Number(r.secondReading1) - Number(r.firstReading1)) + (Number(r.secondReading2) - Number(r.firstReading2)) + (Number(r.secondReading3) - Number(r.firstReading3)) + (Number(r.secondReading4) - Number(r.firstReading4)) + (Number(r.secondReading5) - Number(r.firstReading5)) + (Number(r.secondReading6) - Number(r.firstReading6));
+                const gd = (Number(r.dieselSecondReading1) - Number(r.dieselFirstReading1)) + (Number(r.dieselSecondReading2) - Number(r.dieselFirstReading2)) + (Number(r.dieselSecondReading3) - Number(r.dieselFirstReading3)) + (Number(r.dieselSecondReading4) - Number(r.dieselFirstReading4)) + (Number(r.dieselSecondReading5) - Number(r.dieselFirstReading5)) + (Number(r.dieselSecondReading6) - Number(r.dieselFirstReading6));
+                const gs = (Number(r.speedSecondReading1) - Number(r.speedFirstReading1)) + (Number(r.speedSecondReading2) - Number(r.speedFirstReading2)) + (Number(r.speedSecondReading3) - Number(r.speedFirstReading3));
 
                 const row = document.createElement('tr');
-                row.className = "hover:bg-gray-50 border-b";
+                row.className = "hover:bg-gray-50";
                 row.innerHTML = `
-                    <td class="p-2 border text-center whitespace-nowrap">${r.currentDate}</td>
-                    <td class="p-2 border text-center font-medium">${r.selectedId || 'N/A'}</td>
-                    <td class="p-1 border text-right">${r.firstReading1 || 0}</td><td class="p-1 border text-right font-semibold">${r.secondReading1 || 0}</td>
-                    <td class="p-1 border text-right">${r.firstReading2 || 0}</td><td class="p-1 border text-right font-semibold">${r.secondReading2 || 0}</td>
-                    <td class="p-1 border text-right">${r.firstReading3 || 0}</td><td class="p-1 border text-right font-semibold">${r.secondReading3 || 0}</td>
-                    <td class="p-1 border text-right">${r.firstReading4 || 0}</td><td class="p-1 border text-right font-semibold">${r.secondReading4 || 0}</td>
-                    <td class="p-1 border text-right">${r.firstReading5 || 0}</td><td class="p-1 border text-right font-semibold">${r.secondReading5 || 0}</td>
-                    <td class="p-1 border text-right">${r.firstReading6 || 0}</td><td class="p-1 border text-right font-semibold">${r.secondReading6 || 0}</td>
-                    <td class="p-1 border text-right">${r.dieselFirstReading1 || 0}</td><td class="p-1 border text-right font-semibold">${r.dieselSecondReading1 || 0}</td>
-                    <td class="p-1 border text-right">${r.dieselFirstReading2 || 0}</td><td class="p-1 border text-right font-semibold">${r.dieselSecondReading2 || 0}</td>
-                    <td class="p-1 border text-right">${r.dieselFirstReading3 || 0}</td><td class="p-1 border text-right font-semibold">${r.dieselSecondReading3 || 0}</td>
-                    <td class="p-1 border text-right">${r.dieselFirstReading4 || 0}</td><td class="p-1 border text-right font-semibold">${r.dieselSecondReading4 || 0}</td>
-                    <td class="p-1 border text-right">${r.dieselFirstReading5 || 0}</td><td class="p-1 border text-right font-semibold">${r.dieselSecondReading5 || 0}</td>
-                    <td class="p-1 border text-right">${r.dieselFirstReading6 || 0}</td><td class="p-1 border text-right font-semibold">${r.dieselSecondReading6 || 0}</td>
-                    <td class="p-1 border text-right">${r.speedFirstReading1 || 0}</td><td class="p-1 border text-right font-semibold">${r.speedSecondReading1 || 0}</td>
-                    <td class="p-1 border text-right">${r.speedFirstReading2 || 0}</td><td class="p-1 border text-right font-semibold">${r.speedSecondReading2 || 0}</td>
-                    <td class="p-1 border text-right">${r.speedFirstReading3 || 0}</td><td class="p-1 border text-right font-semibold">${r.speedSecondReading3 || 0}</td>
-                    <td class="p-1 border text-right">${r.oilFirstReading || 0}</td><td class="p-1 border text-right font-semibold">${r.oilSecondReading || 0}</td>
-                    <td class="p-1 border text-right font-bold text-orange-600">${diffP.toFixed(2)}</td>
-                    <td class="p-1 border text-right font-bold text-blue-600">${diffD.toFixed(2)}</td>
-                    <td class="p-1 border text-right font-bold text-purple-600">${diffS.toFixed(2)}</td>
-                    <td class="p-1 border text-right font-bold text-yellow-600">${diffO.toFixed(2)}</td>
+                    <td class="p-1 border text-center font-medium">${r.currentDate}</td>
+                    <td class="p-1 border text-center font-semibold text-blue-800">${staffName}</td>
+                    <td class="p-1 border text-right bg-orange-50">${val(r.firstReading1, r.secondReading1)}</td><td class="p-1 border text-right bg-orange-50">${val2(r.firstReading1, r.secondReading1)}</td>
+                    <td class="p-1 border text-right bg-orange-50">${val(r.firstReading2, r.secondReading2)}</td><td class="p-1 border text-right bg-orange-50">${val2(r.firstReading2, r.secondReading2)}</td>
+                    <td class="p-1 border text-right bg-orange-50">${val(r.firstReading3, r.secondReading3)}</td><td class="p-1 border text-right bg-orange-50">${val2(r.firstReading3, r.secondReading3)}</td>
+                    <td class="p-1 border text-right bg-orange-50">${val(r.firstReading4, r.secondReading4)}</td><td class="p-1 border text-right bg-orange-50">${val2(r.firstReading4, r.secondReading4)}</td>
+                    <td class="p-1 border text-right bg-orange-50">${val(r.firstReading5, r.secondReading5)}</td><td class="p-1 border text-right bg-orange-50">${val2(r.firstReading5, r.secondReading5)}</td>
+                    <td class="p-1 border text-right bg-orange-50">${val(r.firstReading6, r.secondReading6)}</td><td class="p-1 border text-right bg-orange-50">${val2(r.firstReading6, r.secondReading6)}</td>
+                    <td class="p-1 border text-right bg-blue-50">${val(r.dieselFirstReading1, r.dieselSecondReading1)}</td><td class="p-1 border text-right bg-blue-50">${val2(r.dieselFirstReading1, r.dieselSecondReading1)}</td>
+                    <td class="p-1 border text-right bg-blue-50">${val(r.dieselFirstReading2, r.dieselSecondReading2)}</td><td class="p-1 border text-right bg-blue-50">${val2(r.dieselFirstReading2, r.dieselSecondReading2)}</td>
+                    <td class="p-1 border text-right bg-blue-50">${val(r.dieselFirstReading3, r.dieselSecondReading3)}</td><td class="p-1 border text-right bg-blue-50">${val2(r.dieselFirstReading3, r.dieselSecondReading3)}</td>
+                    <td class="p-1 border text-right bg-blue-50">${val(r.dieselFirstReading4, r.dieselSecondReading4)}</td><td class="p-1 border text-right bg-blue-50">${val2(r.dieselFirstReading4, r.dieselSecondReading4)}</td>
+                    <td class="p-1 border text-right bg-blue-50">${val(r.dieselFirstReading5, r.dieselSecondReading5)}</td><td class="p-1 border text-right bg-blue-50">${val2(r.dieselFirstReading5, r.dieselSecondReading5)}</td>
+                    <td class="p-1 border text-right bg-blue-50">${val(r.dieselFirstReading6, r.dieselSecondReading6)}</td><td class="p-1 border text-right bg-blue-50">${val2(r.dieselFirstReading6, r.dieselSecondReading6)}</td>
+                    <td class="p-1 border text-right bg-purple-50">${val(r.speedFirstReading1, r.speedSecondReading1)}</td><td class="p-1 border text-right bg-purple-50">${val2(r.speedFirstReading1, r.speedSecondReading1)}</td>
+                    <td class="p-1 border text-right bg-purple-50">${val(r.speedFirstReading2, r.speedSecondReading2)}</td><td class="p-1 border text-right bg-purple-50">${val2(r.speedFirstReading2, r.speedSecondReading2)}</td>
+                    <td class="p-1 border text-right bg-purple-50">${val(r.speedFirstReading3, r.speedSecondReading3)}</td><td class="p-1 border text-right bg-purple-50">${val2(r.speedFirstReading3, r.speedSecondReading3)}</td>
+                    <td class="p-1 border text-right bg-yellow-50">${val(r.oilFirstReading, r.oilSecondReading)}</td><td class="p-1 border text-right bg-yellow-50">${val2(r.oilFirstReading, r.oilSecondReading)}</td>
+                    <td class="p-1 border text-right text-gray-500 bg-gray-50">${gp.toFixed(2)}</td>
+                    <td class="p-1 border text-right text-gray-500 bg-gray-50">${gd.toFixed(2)}</td>
+                    <td class="p-1 border text-right text-gray-500 bg-gray-50">${gs.toFixed(2)}</td>
+                    <td class="p-1 border text-right font-bold text-orange-600">${(gp - (r.petrolTestQuantity || 0)).toFixed(2)}</td>
+                    <td class="p-1 border text-right font-bold text-blue-600">${(gd - (r.dieselTestQuantity || 0)).toFixed(2)}</td>
+                    <td class="p-1 border text-right font-bold text-purple-600">${(gs - (r.speedTestQuantity || 0)).toFixed(2)}</td>
+                    <td class="p-1 border text-right font-bold text-yellow-600">${(Number(r.oilFirstReading) - Number(r.oilSecondReading)).toFixed(2)}</td>
                 `;
                 container.appendChild(row);
             });
-
-            document.getElementById('grandTotalPetrol').textContent = totalP.toFixed(2);
-            document.getElementById('grandTotalDiesel').textContent = totalD.toFixed(2);
-            document.getElementById('grandTotalSpeed').textContent = totalS.toFixed(2);
-            document.getElementById('grandTotalOil').textContent = totalO.toFixed(2);
         }
 
-        function filterTable() {
-            const pickerDate = document.getElementById('dateSearch').value;
-            renderTable(!pickerDate ? allReadings : allReadings.filter(r => r.currentDate === pickerDate));
-            document.getElementById('noDataMessage').classList.toggle('hidden', !pickerDate || allReadings.some(r => r.currentDate === pickerDate));
+        function getTableFoot(data) {
+            const t = data.reduce((acc, r) => {
+                const gp = (Number(r.secondReading1) - Number(r.firstReading1)) + (Number(r.secondReading2) - Number(r.firstReading2)) + (Number(r.secondReading3) - Number(r.firstReading3)) + (Number(r.secondReading4) - Number(r.firstReading4)) + (Number(r.secondReading5) - Number(r.firstReading5)) + (Number(r.secondReading6) - Number(r.firstReading6));
+                const gd = (Number(r.dieselSecondReading1) - Number(r.dieselFirstReading1)) + (Number(r.dieselSecondReading2) - Number(r.dieselFirstReading2)) + (Number(r.dieselSecondReading3) - Number(r.dieselFirstReading3)) + (Number(r.dieselSecondReading4) - Number(r.dieselFirstReading4)) + (Number(r.dieselSecondReading5) - Number(r.dieselFirstReading5)) + (Number(r.dieselSecondReading6) - Number(r.dieselFirstReading6));
+                const gs = (Number(r.speedSecondReading1) - Number(r.speedFirstReading1)) + (Number(r.speedSecondReading2) - Number(r.speedFirstReading2)) + (Number(r.speedSecondReading3) - Number(r.speedFirstReading3));
+                acc.gp += gp; acc.gd += gd; acc.gs += gs;
+                acc.np += (gp - (Number(r.petrolTestQuantity) || 0));
+                acc.nd += (gd - (Number(r.dieselTestQuantity) || 0));
+                acc.ns += (gs - (Number(r.speedTestQuantity) || 0));
+                acc.no += (Number(r.oilFirstReading) - Number(r.oilSecondReading));
+                return acc;
+            }, { gp:0, gd:0, gs:0, np:0, nd:0, ns:0, no:0 });
+
+            return `
+                <tfoot class="bg-gray-200 font-bold">
+                    <tr>
+                        <td class="border p-2 text-center" colspan="2">Shift Liters Total</td>
+                        <td class="border p-2 text-right" colspan="32"></td>
+                        <td class="border p-2 text-right text-gray-500">${t.gp.toFixed(2)}</td>
+                        <td class="border p-2 text-right text-gray-500">${t.gd.toFixed(2)}</td>
+                        <td class="border p-2 text-right text-gray-500">${t.gs.toFixed(2)}</td>
+                        <td class="border p-2 text-right text-orange-700">${t.np.toFixed(2)}</td>
+                        <td class="border p-2 text-right text-blue-700">${t.nd.toFixed(2)}</td>
+                        <td class="border p-2 text-right text-purple-700">${t.ns.toFixed(2)}</td>
+                        <td class="border p-2 text-right text-yellow-700">${t.no.toFixed(2)}</td>
+                    </tr>
+                </tfoot>`;
+        }
+
+        function renderDaySummary(data) {
+            const wrapper = document.getElementById('tablesWrapper');
+            const summaryData = data.reduce((acc, r) => {
+                const netP = ((Number(r.secondReading1) - Number(r.firstReading1)) + (Number(r.secondReading2) - Number(r.firstReading2)) + (Number(r.secondReading3) - Number(r.firstReading3)) + (Number(r.secondReading4) - Number(r.firstReading4)) + (Number(r.secondReading5) - Number(r.firstReading5)) + (Number(r.secondReading6) - Number(r.firstReading6))) - (Number(r.petrolTestQuantity) || 0);
+                const netD = ((Number(r.dieselSecondReading1) - Number(r.dieselFirstReading1)) + (Number(r.dieselSecondReading2) - Number(r.dieselFirstReading2)) + (Number(r.dieselSecondReading3) - Number(r.dieselFirstReading3)) + (Number(r.dieselSecondReading4) - Number(r.dieselFirstReading4)) + (Number(r.dieselSecondReading5) - Number(r.dieselFirstReading5)) + (Number(r.dieselSecondReading6) - Number(r.dieselFirstReading6))) - (Number(r.dieselTestQuantity) || 0);
+                const netS = ((Number(r.speedSecondReading1) - Number(r.speedFirstReading1)) + (Number(r.speedSecondReading2) - Number(r.speedFirstReading2)) + (Number(r.speedSecondReading3) - Number(r.speedFirstReading3))) - (Number(r.speedTestQuantity) || 0);
+                const netO = (Number(r.oilFirstReading) || 0) - (Number(r.oilSecondReading) || 0);
+
+                acc.pVal += netP * (Number(r.petrol) || 0);
+                acc.dVal += netD * (Number(r.diesel) || 0);
+                acc.sVal += netS * (Number(r.speed) || 0);
+                acc.oVal += netO * (Number(r.oil) || 0); // Corrected to multiply liters * rate
+                
+                return acc;
+            }, { pVal:0, dVal:0, sVal:0, oVal:0 });
+
+            const totalRevenue = summaryData.pVal + summaryData.dVal + summaryData.sVal + summaryData.oVal;
+
+            const summary = document.createElement('div');
+            summary.className = "mt-12 p-6 bg-gray-50 rounded-xl border-2 border-blue-200";
+            summary.innerHTML = `
+                <h2 class="text-2xl font-bold text-blue-900 mb-6 border-b-2 border-blue-100 pb-2 text-center underline">Grand Day Summary (Net Sold × Rate)</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="bg-orange-100 p-4 rounded-lg shadow-sm text-center">
+                        <p class="text-orange-800 font-bold uppercase text-xs">Petrol</p>
+                        <p class="text-xl font-black text-orange-900">₹${summaryData.pVal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+                    </div>
+                    <div class="bg-blue-100 p-4 rounded-lg shadow-sm text-center">
+                        <p class="text-blue-800 font-bold uppercase text-xs">Diesel</p>
+                        <p class="text-xl font-black text-blue-900">₹${summaryData.dVal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+                    </div>
+                    <div class="bg-purple-100 p-4 rounded-lg shadow-sm text-center">
+                        <p class="text-purple-800 font-bold uppercase text-xs">Speed</p>
+                        <p class="text-xl font-black text-purple-900">₹${summaryData.sVal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+                    </div>
+                    <div class="bg-yellow-100 p-4 rounded-lg shadow-sm text-center">
+                        <p class="text-yellow-800 font-bold uppercase text-xs">Oil Sales</p>
+                        <p class="text-xl font-black text-yellow-900">₹${summaryData.oVal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+                    </div>
+                </div>
+                <div class="mt-6 p-4 md:p-6 bg-green-600 rounded-lg text-white flex flex-col md:flex-row justify-between items-center gap-4 shadow-lg">
+                    <span class="text-base md:text-lg font-bold text-center md:text-left">
+                        Grand Total Expected Revenue:
+                    </span>
+                    <span class="text-2xl md:text-4xl font-black tabular-nums">
+                        ₹${totalRevenue.toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                    </span>
+                </div>`;
+            wrapper.appendChild(summary);
+        }
+
+        function filterData() {
+            const date = document.getElementById('dateSearch').value;
+            const filtered = !date ? allReadings : allReadings.filter(r => r.currentDate === date);
+            renderShiftWiseTables(filtered);
+            document.getElementById('noDataMessage').classList.toggle('hidden', filtered.length > 0);
         }
 
         function resetFilter() {
             document.getElementById('dateSearch').value = '';
-            renderTable(allReadings);
+            renderShiftWiseTables(allReadings);
             document.getElementById('noDataMessage').classList.add('hidden');
         }
 
-        window.onload = loadData;
+        window.onload = loadReadings;
     </script>
 </body>
 </html>

@@ -70,6 +70,9 @@ app.get('/staff-denominations', (req, res) => {
 app.get('/signup', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'signup.html'));
 });
+app.get('/master_dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'master_view.html'));
+});
 // Serve static files from the 'public' directory
 // This middleware will now only handle requests that haven't been caught by the routes above
 app.use(express.static(path.join(__dirname, 'public')));
@@ -82,7 +85,9 @@ app.use(cors());
 
 // MongoDB Connection
 // Replace with your actual MongoDB connection string
-mongoose.connect(`mongodb+srv://amballurpetropark:OqHE64SKhbmqENG4@cluster0.gcb7yyp.mongodb.net/`)
+//mongodb+srv://wyenfos013:wyenfos4551@cluster0.90i2ivc.mongodb.net/adminp
+//mongodb+srv://amballurpetropark:OqHE64SKhbmqENG4@cluster0.gcb7yyp.mongodb.net/
+mongoose.connect(`mongodb+srv://wyenfos013:wyenfos4551@cluster0.90i2ivc.mongodb.net/adminp`)
     .then(() => console.log('MongoDB connected...'))
     .catch(err => console.error(err));
 
@@ -144,6 +149,7 @@ const Staff = mongoose.model('Staff', staffSchema);
 const readingSchema = new mongoose.Schema({
     currentDate: { type: String, required: true },
     selectedId: { type: String, required: true }, // This will now store the staffId
+    shift: { type: String, required: true },
     petrol: { type: Number, default: 0 },
     diesel: { type: Number, default: 0 },
     oil: { type: Number, default: 0 },
@@ -186,6 +192,7 @@ const readingSchema = new mongoose.Schema({
    packedOilEntries: [{ name: String, amount: Number, price: Number}],
     creditEntries: [{ name: String, amount: Number }],
     debitEntries: [{ name: String, amount: Number }],
+    expenseEntries: [{ name: String, amount: Number }],
     note500: { type: Number, default: 0 },
     note200: { type: Number, default: 0 },
     note100: { type: Number, default: 0 },
@@ -469,7 +476,8 @@ app.get('/api/reports/daily-excess-shot', async (req, res) => {
             // 6. CREDIT & DEBIT
             const totalCredit = (reading.creditEntries || []).reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
             const totalDebit = (reading.debitEntries || []).reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
-            console.log(`Credits: ${totalCredit}, Debits: ${totalDebit}`);
+            const totalExpenses = (reading.expenseEntries || []).reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+            console.log(`Credits: ${totalCredit}, Debits: ${totalDebit}, Expenses: ${totalExpenses}`);
 
             // 7. TEST QUANTITIES (Liters)
            const petrolTestMoney = Number(reading.petrolTestQuantity || 0) * Number(reading.petrol || 0);
@@ -490,8 +498,9 @@ app.get('/api/reports/daily-excess-shot', async (req, res) => {
 
             // THE FINAL FORMULA PROVIDED BY YOU:
             // (Oil + Petrol + Diesel + Water + Acid + Packed + Credit) - (Debit + Tests + Denomination)
-            const result = (totalCredit + totalTestMoney + totalDenomination) - (oilReq + petrolReq + dieselReq + speedReq + packedOilMoney + totalDebit);
-            const requiredmoney =   (totalCredit + totalTestMoney) - (oilReq + petrolReq + dieselReq + speedReq + packedOilMoney + totalDebit );
+            
+            const requiredmoney = (oilReq + petrolReq + dieselReq + speedReq + packedOilMoney + totalDebit ) - (totalCredit + totalExpenses + totalTestMoney);
+            const result = ( totalDenomination - requiredmoney);
              console.log(`required money: ${requiredmoney}`);
             console.log(`FINAL CALCULATION RESULT: ${result}`);
             console.log(`--------------------------------------`);
@@ -560,7 +569,7 @@ app.get('/api/transactions/packedOil', async (req, res) => {
 // API Endpoint to fetch credit/debit transactions for view_transactions.html (UPDATED)
 app.get('/api/transactions/creditDebit', async (req, res) => {
     try {
-        const { fromDate, toDate, staffId, partyName } = req.query; // Destructure partyName
+        const { fromDate, toDate, staffId, partyName } = req.query;
         let query = {};
 
         if (fromDate && toDate) {
@@ -571,11 +580,10 @@ app.get('/api/transactions/creditDebit', async (req, res) => {
             query.selectedId = staffId;
         }
 
-        // Base query to fetch readings
-        let readingsQuery = Reading.find(query).select('currentDate creditEntries debitEntries selectedId');
+        // UPDATED: Added 'expenseEntries' to the .select() method
+        let readingsQuery = Reading.find(query).select('currentDate creditEntries debitEntries expenseEntries selectedId');
 
         const readings = await readingsQuery;
-
         const transactionsByDate = {};
 
         readings.forEach(reading => {
@@ -584,42 +592,51 @@ app.get('/api/transactions/creditDebit', async (req, res) => {
 
             let filteredCredits = [];
             let filteredDebits = [];
+            let filteredExpenses = [];
 
-            // Filter credit entries by partyName if provided
+            // Filter Credits
             if (reading.creditEntries && reading.creditEntries.length > 0) {
                 filteredCredits = reading.creditEntries.filter(entry => {
                     return !partyName || entry.name.toLowerCase().includes(partyName.toLowerCase());
                 });
             }
 
-            // Filter debit entries by partyName if provided
+            // Filter Debits
             if (reading.debitEntries && reading.debitEntries.length > 0) {
                 filteredDebits = reading.debitEntries.filter(entry => {
                     return !partyName || entry.name.toLowerCase().includes(partyName.toLowerCase());
                 });
             }
 
-            // Only add to transactionsByDate if there are filtered entries for this date
-            if (filteredCredits.length > 0 || filteredDebits.length > 0) {
+            // ADDED: Filter Expense Entries
+            if (reading.expenseEntries && reading.expenseEntries.length > 0) {
+                filteredExpenses = reading.expenseEntries.filter(entry => {
+                    // Filter by party name if a search is active, otherwise include all
+                    return !partyName || (entry.name && entry.name.toLowerCase().includes(partyName.toLowerCase()));
+                });
+            }
+
+            // UPDATED: Include filteredExpenses in the check
+            if (filteredCredits.length > 0 || filteredDebits.length > 0 || filteredExpenses.length > 0) {
                 if (!transactionsByDate[date]) {
                     transactionsByDate[date] = {
                         credits: [],
-                        debits: []
+                        debits: [],
+                        expenseEntries: [] // Initialize array
                     };
                 }
 
                 filteredCredits.forEach(entry => {
-                    transactionsByDate[date].credits.push({
-                        ...entry._doc,
-                        staffId: staff
-                    });
+                    transactionsByDate[date].credits.push({ ...entry._doc, staffId: staff });
                 });
 
                 filteredDebits.forEach(entry => {
-                    transactionsByDate[date].debits.push({
-                        ...entry._doc,
-                        staffId: staff
-                    });
+                    transactionsByDate[date].debits.push({ ...entry._doc, staffId: staff });
+                });
+
+                // ADDED: Push expenses to the date group
+                filteredExpenses.forEach(entry => {
+                    transactionsByDate[date].expenseEntries.push({ ...entry._doc, staffId: staff });
                 });
             }
         });
@@ -632,11 +649,10 @@ app.get('/api/transactions/creditDebit', async (req, res) => {
 
         res.status(200).json(sortedTransactions);
     } catch (error) {
-        console.error('Error fetching credit/debit transactions:', error);
-        res.status(500).json({ message: 'Failed to fetch credit/debit transactions', error: error.message });
+        console.error('Error fetching transactions:', error);
+        res.status(500).json({ message: 'Failed to fetch transactions', error: error.message });
     }
 });
-
 
 // --- API Endpoints for Reading Data (Existing) ---
 
