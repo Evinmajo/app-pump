@@ -87,7 +87,7 @@ app.use(cors());
 // Replace with your actual MongoDB connection string
 //mongodb+srv://wyenfos013:wyenfos4551@cluster0.90i2ivc.mongodb.net/adminp
 //mongodb+srv://amballurpetropark:OqHE64SKhbmqENG4@cluster0.gcb7yyp.mongodb.net/
-mongoose.connect(`mongodb+srv://wyenfos013:wyenfos4551@cluster0.90i2ivc.mongodb.net/adminp`)
+mongoose.connect(`mongodb+srv://amballurpetropark:OqHE64SKhbmqENG4@cluster0.gcb7yyp.mongodb.net/`)
     .then(() => console.log('MongoDB connected...'))
     .catch(err => console.error(err));
 
