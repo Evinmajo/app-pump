@@ -245,6 +245,12 @@
                 const netD = ((Number(r.dieselSecondReading1) - Number(r.dieselFirstReading1)) + (Number(r.dieselSecondReading2) - Number(r.dieselFirstReading2)) + (Number(r.dieselSecondReading3) - Number(r.dieselFirstReading3)) + (Number(r.dieselSecondReading4) - Number(r.dieselFirstReading4)) + (Number(r.dieselSecondReading5) - Number(r.dieselFirstReading5)) + (Number(r.dieselSecondReading6) - Number(r.dieselFirstReading6))) - (Number(r.dieselTestQuantity) || 0);
                 const netS = ((Number(r.speedSecondReading1) - Number(r.speedFirstReading1)) + (Number(r.speedSecondReading2) - Number(r.speedFirstReading2)) + (Number(r.speedSecondReading3) - Number(r.speedFirstReading3))) - (Number(r.speedTestQuantity) || 0);
                 const netO = (Number(r.oilFirstReading) || 0) - (Number(r.oilSecondReading) || 0);
+                 
+                // Liters
+                acc.pVol += netP;
+                acc.dVol += netD;
+                acc.sVol += netS;
+                acc.oVol += netO;
 
                 acc.pVal += netP * (Number(r.petrol) || 0);
                 acc.dVal += netD * (Number(r.diesel) || 0);
@@ -252,7 +258,7 @@
                 acc.oVal += netO * (Number(r.oil) || 0); // Corrected to multiply liters * rate
                 
                 return acc;
-            }, { pVal:0, dVal:0, sVal:0, oVal:0 });
+            }, { pVal:0, dVal:0, sVal:0, oVal:0, pVol:0, dVol:0, sVol:0, oVol:0 });
 
             const totalRevenue = summaryData.pVal + summaryData.dVal + summaryData.sVal + summaryData.oVal;
 
@@ -263,18 +269,22 @@
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div class="bg-orange-100 p-4 rounded-lg shadow-sm text-center">
                         <p class="text-orange-800 font-bold uppercase text-xs">Petrol</p>
+                        <p class="text-sm font-semibold text-orange-700">${summaryData.pVol.toFixed(2)} L</p>
                         <p class="text-xl font-black text-orange-900">₹${summaryData.pVal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
                     </div>
                     <div class="bg-blue-100 p-4 rounded-lg shadow-sm text-center">
                         <p class="text-blue-800 font-bold uppercase text-xs">Diesel</p>
+                        <p class="text-sm font-semibold text-blue-700">${summaryData.dVol.toFixed(2)} L</p>
                         <p class="text-xl font-black text-blue-900">₹${summaryData.dVal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
                     </div>
                     <div class="bg-purple-100 p-4 rounded-lg shadow-sm text-center">
                         <p class="text-purple-800 font-bold uppercase text-xs">Speed</p>
+                        <p class="text-sm font-semibold text-purple-700">${summaryData.sVol.toFixed(2)} L</p>
                         <p class="text-xl font-black text-purple-900">₹${summaryData.sVal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
                     </div>
                     <div class="bg-yellow-100 p-4 rounded-lg shadow-sm text-center">
                         <p class="text-yellow-800 font-bold uppercase text-xs">Oil Sales</p>
+                        <p class="text-sm font-semibold text-yellow-700">${summaryData.oVol.toFixed(2)} L</p>
                         <p class="text-xl font-black text-yellow-900">₹${summaryData.oVal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
                     </div>
                 </div>
