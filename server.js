@@ -660,29 +660,35 @@ app.get('/api/transactions/creditDebit', async (req, res) => {
 app.post('/api/saveReading', async (req, res) => {
     try {
         const data = req.body;
+
+        // 1. Data validation before starting DB work
         if (data.totalAmount !== undefined && data.totalDenomination === undefined) {
             data.totalDenomination = data.totalAmount;
         }
-        const newReading = new Reading(req.body);
-        await newReading.save();
 
+        // 2. PRIMARY SAVE: Wait for the reading to be written to disk
+        const newReading = new Reading(req.body);
+        const savedReading = await newReading.save(); //
+
+        // 3. INVENTORY UPDATE: Using for...of with await is correct, 
+        // but we must ensure we don't skip any entries.
         if (data.packedOilEntries && data.packedOilEntries.length > 0) {
-            for (const entry of data.packedOilEntries){
-                // Find the oil type in the stock and decrement the quantity
-                // We use $inc with a negative value to reduce the stock
+            for (const entry of data.packedOilEntries) {
+                // Force the loop to wait for each stock update to finish
                 await OilStock.findOneAndUpdate(
                     { type: entry.name }, 
                     { $inc: { quantity: -entry.amount } }
-                );
+                ); //
             }
         }
 
-        // AUTOMATIC UPDATE: Set current Second Readings as the new First Readings for next time
+        // 4. AUTOMATIC UPDATE: Wait for the DefaultReading update to finish
+        // If the server crashes here, the next staff will see wrong "First Readings"
         await DefaultReading.findOneAndUpdate({}, {
             p1: req.body.secondReading1,
             p2: req.body.secondReading2,
             p3: req.body.secondReading3,
-            p4: req.body.secondReading4, // Add these
+            p4: req.body.secondReading4,
             p5: req.body.secondReading5,
             p6: req.body.secondReading6,
             d1: req.body.dieselSecondReading1,
@@ -694,12 +700,16 @@ app.post('/api/saveReading', async (req, res) => {
             s1: req.body.speedSecondReading1,
             s2: req.body.speedSecondReading2,
             s3: req.body.speedSecondReading3
-        }, { upsert: true });
+        }, { upsert: true }); //
 
-        res.status(201).json(newReading);
+        // 5. FINAL RESPONSE: Only send this once all steps 2, 3, and 4 are DONE.
+        // This tells Vercel/Render "Everything is finished, you can sleep now."
+        res.status(201).json(savedReading); //
+
     } catch (error) {
         console.error('Error saving reading:', error);
-        res.status(500).json({ message: 'Error saving reading', error: error.message });
+        // If any of the 'await' calls above fail, the code jumps here instantly
+        res.status(500).json({ message: 'Error saving reading', error: error.message }); //
     }
 });
 
