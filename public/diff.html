@@ -136,6 +136,7 @@
             renderDaySummary(data);
         }
 
+        
         function getTableHead() {
             return `
                 <thead class="bg-gray-100 text-gray-700 sticky top-0">
@@ -144,9 +145,10 @@
                         <th class="border p-2 text-center" rowspan="3">Staff</th>
                         <th class="border p-2 text-center bg-orange-50" colspan="12">Petrol Readings (MS1-MS6)</th>
                         <th class="border p-2 text-center bg-blue-50" colspan="12">Diesel Readings (HSD1-HSD6)</th>
-                        <th class="border p-2 text-center bg-purple-50" colspan="6">Speed Readings (3A-4A)</th>
+                        <th class="border p-2 text-center bg-purple-50" colspan="6">Speed Readings (3A-5A)</th>
                         <th class="border p-2 text-center bg-yellow-50" colspan="2">Oil</th>
                         <th class="border p-2 text-center bg-green-50" colspan="3">Gross Sold (L)</th>
+                        <th class="border p-2 text-center bg-red-50" colspan="3">Tests (L)</th>
                         <th class="border p-2 text-center bg-green-100" colspan="4">Net Sold (L)</th>
                     </tr>
                     <tr>
@@ -157,6 +159,7 @@
                         <th class="border p-1 text-center bg-purple-100" colspan="2">3A</th><th class="border p-1 text-center bg-purple-100" colspan="2">4A</th><th class="border p-1 text-center bg-purple-100" colspan="2">5A</th>
                         <th class="border p-1 text-center bg-yellow-100" colspan="2">Oil</th>
                         <th class="border p-1 text-center bg-green-50" rowspan="2">Petrol</th><th class="border p-1 text-center bg-green-50" rowspan="2">Diesel</th><th class="border p-1 text-center bg-green-50" rowspan="2">Speed</th>
+                        <th class="border p-1 text-center bg-red-50" rowspan="2">P-Tst</th><th class="border p-1 text-center bg-red-50" rowspan="2">D-Tst</th><th class="border p-1 text-center bg-red-50" rowspan="2">S-Tst</th>
                         <th class="border p-1 text-center bg-green-100" rowspan="2">Petrol</th><th class="border p-1 text-center bg-green-100" rowspan="2">Diesel</th><th class="border p-1 text-center bg-green-100" rowspan="2">Speed</th><th class="border p-1 text-center bg-green-100" rowspan="2">Oil</th>
                     </tr>
                     <tr>
@@ -200,6 +203,11 @@
                     <td class="p-1 border text-right text-gray-500 bg-gray-50">${gp.toFixed(2)}</td>
                     <td class="p-1 border text-right text-gray-500 bg-gray-50">${gd.toFixed(2)}</td>
                     <td class="p-1 border text-right text-gray-500 bg-gray-50">${gs.toFixed(2)}</td>
+                    
+                    <td class="p-1 border text-right text-red-600 bg-red-50">${(r.petrolTestQuantity || 0).toFixed(2)}</td>
+                    <td class="p-1 border text-right text-red-600 bg-red-50">${(r.dieselTestQuantity || 0).toFixed(2)}</td>
+                    <td class="p-1 border text-right text-red-600 bg-red-50">${(r.speedTestQuantity || 0).toFixed(2)}</td>
+
                     <td class="p-1 border text-right font-bold text-orange-600">${(gp - (r.petrolTestQuantity || 0)).toFixed(2)}</td>
                     <td class="p-1 border text-right font-bold text-blue-600">${(gd - (r.dieselTestQuantity || 0)).toFixed(2)}</td>
                     <td class="p-1 border text-right font-bold text-purple-600">${(gs - (r.speedTestQuantity || 0)).toFixed(2)}</td>
@@ -209,18 +217,23 @@
             });
         }
 
-        function getTableFoot(data) {
+     function getTableFoot(data) {
             const t = data.reduce((acc, r) => {
                 const gp = (Number(r.secondReading1) - Number(r.firstReading1)) + (Number(r.secondReading2) - Number(r.firstReading2)) + (Number(r.secondReading3) - Number(r.firstReading3)) + (Number(r.secondReading4) - Number(r.firstReading4)) + (Number(r.secondReading5) - Number(r.firstReading5)) + (Number(r.secondReading6) - Number(r.firstReading6));
                 const gd = (Number(r.dieselSecondReading1) - Number(r.dieselFirstReading1)) + (Number(r.dieselSecondReading2) - Number(r.dieselFirstReading2)) + (Number(r.dieselSecondReading3) - Number(r.dieselFirstReading3)) + (Number(r.dieselSecondReading4) - Number(r.dieselFirstReading4)) + (Number(r.dieselSecondReading5) - Number(r.dieselFirstReading5)) + (Number(r.dieselSecondReading6) - Number(r.dieselFirstReading6));
                 const gs = (Number(r.speedSecondReading1) - Number(r.speedFirstReading1)) + (Number(r.speedSecondReading2) - Number(r.speedFirstReading2)) + (Number(r.speedSecondReading3) - Number(r.speedFirstReading3));
                 acc.gp += gp; acc.gd += gd; acc.gs += gs;
+                // Add test totals
+                acc.tp += (Number(r.petrolTestQuantity) || 0);
+                acc.td += (Number(r.dieselTestQuantity) || 0);
+                acc.ts += (Number(r.speedTestQuantity) || 0);
+
                 acc.np += (gp - (Number(r.petrolTestQuantity) || 0));
                 acc.nd += (gd - (Number(r.dieselTestQuantity) || 0));
                 acc.ns += (gs - (Number(r.speedTestQuantity) || 0));
                 acc.no += (Number(r.oilFirstReading) - Number(r.oilSecondReading));
                 return acc;
-            }, { gp:0, gd:0, gs:0, np:0, nd:0, ns:0, no:0 });
+            }, { gp:0, gd:0, gs:0, tp:0, td:0, ts:0, np:0, nd:0, ns:0, no:0 });
 
             return `
                 <tfoot class="bg-gray-200 font-bold">
@@ -230,6 +243,10 @@
                         <td class="border p-2 text-right text-gray-500">${t.gp.toFixed(2)}</td>
                         <td class="border p-2 text-right text-gray-500">${t.gd.toFixed(2)}</td>
                         <td class="border p-2 text-right text-gray-500">${t.gs.toFixed(2)}</td>
+                        <td class="border p-2 text-right text-red-700 bg-red-50">${t.tp.toFixed(2)}</td>
+                        <td class="border p-2 text-right text-red-700 bg-red-50">${t.td.toFixed(2)}</td>
+                        <td class="border p-2 text-right text-red-700 bg-red-50">${t.ts.toFixed(2)}</td>
+                        
                         <td class="border p-2 text-right text-orange-700">${t.np.toFixed(2)}</td>
                         <td class="border p-2 text-right text-blue-700">${t.nd.toFixed(2)}</td>
                         <td class="border p-2 text-right text-purple-700">${t.ns.toFixed(2)}</td>
@@ -237,7 +254,7 @@
                     </tr>
                 </tfoot>`;
         }
-
+        
         function renderDaySummary(data) {
             const wrapper = document.getElementById('tablesWrapper');
             const summaryData = data.reduce((acc, r) => {
@@ -246,6 +263,8 @@
                 const netS = ((Number(r.speedSecondReading1) - Number(r.speedFirstReading1)) + (Number(r.speedSecondReading2) - Number(r.speedFirstReading2)) + (Number(r.speedSecondReading3) - Number(r.speedFirstReading3))) - (Number(r.speedTestQuantity) || 0);
                 const netO = (Number(r.oilFirstReading) || 0) - (Number(r.oilSecondReading) || 0);
                  
+                const readingExpenses = (r.expenseEntries || []).reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+                acc.totalExpenses += readingExpenses;
                 // Liters
                 acc.pVol += netP;
                 acc.dVol += netD;
@@ -258,14 +277,15 @@
                 acc.oVal += netO * (Number(r.oil) || 0); // Corrected to multiply liters * rate
                 
                 return acc;
-            }, { pVal:0, dVal:0, sVal:0, oVal:0, pVol:0, dVol:0, sVol:0, oVol:0 });
+            }, { pVal:0, dVal:0, sVal:0, oVal:0, pVol:0, dVol:0, sVol:0, oVol:0, totalExpenses:0 });
 
             const totalRevenue = summaryData.pVal + summaryData.dVal + summaryData.sVal + summaryData.oVal;
+            const netFinalAmount = totalRevenue - summaryData.totalExpenses;
 
             const summary = document.createElement('div');
             summary.className = "mt-12 p-6 bg-gray-50 rounded-xl border-2 border-blue-200";
             summary.innerHTML = `
-                <h2 class="text-2xl font-bold text-blue-900 mb-6 border-b-2 border-blue-100 pb-2 text-center underline">Grand Day Summary (Net Sold × Rate)</h2>
+                <h2 class="text-2xl font-bold text-blue-900 mb-6 border-b-2 border-blue-100 pb-2 text-center underline">Grand Day Summary</h2>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div class="bg-orange-100 p-4 rounded-lg shadow-sm text-center">
                         <p class="text-orange-800 font-bold uppercase text-xs">Petrol</p>
@@ -288,12 +308,28 @@
                         <p class="text-xl font-black text-yellow-900">₹${summaryData.oVal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
                     </div>
                 </div>
+            
+                <div class="mt-6 p-4 bg-red-50 border border-red-100 rounded-lg flex justify-between items-center text-red-700">
+                    <span class="font-bold uppercase text-sm tracking-wide">Total Daily Expenses:</span>
+                    <span class="text-xl font-bold">- ₹${summaryData.totalExpenses.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                </div>
                 <div class="mt-6 p-4 md:p-6 bg-green-600 rounded-lg text-white flex flex-col md:flex-row justify-between items-center gap-4 shadow-lg">
                     <span class="text-base md:text-lg font-bold text-center md:text-left">
                         Grand Total Expected Revenue:
                     </span>
                     <span class="text-2xl md:text-4xl font-black tabular-nums">
                         ₹${totalRevenue.toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                    </span>
+                </div>
+            
+                <div class="mt-4 p-4 md:p-6 bg-green-600 rounded-lg text-white flex flex-col md:flex-row justify-between items-center gap-4 shadow-lg">
+                    <div class="flex flex-col text-center md:text-left">
+                        <span class="text-xs uppercase opacity-80 font-bold">Grand Total (Revenue - Expenses)</span>
+                        <span class="text-base md:text-lg font-bold">Net Expected Cash:</span>
+                    </div>
+                    
+                    <span class="text-2xl md:text-4xl font-black tabular-nums">
+                        ₹${netFinalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}
                     </span>
                 </div>`;
             wrapper.appendChild(summary);

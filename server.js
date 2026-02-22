@@ -73,6 +73,9 @@ app.get('/signup', (req, res) => {
 app.get('/master_dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'master_view.html'));
 });
+app.get('/creditor-summary', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'creditor_summary.html'));
+});
 // Serve static files from the 'public' directory
 // This middleware will now only handle requests that haven't been caught by the routes above
 app.use(express.static(path.join(__dirname, 'public')));
@@ -425,6 +428,51 @@ app.get('/api/reports/staff-denominations', async (req, res) => {
         res.status(200).json(grouped);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching report', error: error.message });
+    }
+});
+
+app.get('/api/reports/creditor-summary', async (req, res) => {
+    try {
+        const readings = await Reading.find({}).select('creditEntries debitEntries');
+        const summary = {};
+
+        readings.forEach(reading => {
+            // Process Credits
+            if (reading.creditEntries) {
+                reading.creditEntries.forEach(entry => {
+                    const name = entry.name.trim();
+                    if (!summary[name]) summary[name] = { credits: 0, debits: 0 };
+                    summary[name].credits += Number(entry.amount || 0);
+                });
+            }
+            // Process Debits
+            if (reading.debitEntries) {
+                reading.debitEntries.forEach(entry => {
+                    const name = entry.name.trim();
+                    if (!summary[name]) summary[name] = { credits: 0, debits: 0 };
+                    summary[name].debits += Number(entry.amount || 0);
+                });
+            }
+        });
+
+        // Convert object to array and calculate pending balance
+        const report = Object.keys(summary).map(name => {
+            const totalCr = summary[name].credits;
+            const totalDr = summary[name].debits;
+            return {
+                name: name,
+                totalCredits: totalCr.toFixed(2),
+                totalDebits: totalDr.toFixed(2),
+                pendingBalance: (totalCr - totalDr).toFixed(2)
+            };
+        }).filter(item => item.name !== ""); // Remove empty names
+
+        // Sort by highest pending balance
+        report.sort((a, b) => b.pendingBalance - a.pendingBalance);
+
+        res.status(200).json(report);
+    } catch (error) {
+        res.status(500).json({ message: 'Error calculating summary', error: error.message });
     }
 });
 
