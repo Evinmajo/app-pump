@@ -597,7 +597,7 @@ app.get('/api/transactions/packedOil', async (req, res) => {
                             name: entry.name,
                             quantity: entry.amount,
                             price: entry.price,
-                            total: (entry.amount * entry.price).toFixed(2)
+                            total: entry.price.toFixed(2)
                         });
                     }
                 });

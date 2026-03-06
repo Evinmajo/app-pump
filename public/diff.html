@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shift-Wise Machine Readings</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="./style.js"></script>
     <style>
         .overflow-x-auto::-webkit-scrollbar { height: 6px; }
@@ -21,21 +22,29 @@
     </style>
 </head>
 <body class="bg-gray-100 p-2 md:p-8">
-    <div class="max-w-full mx-auto bg-white rounded-xl shadow-md p-4 md:p-6">
+    <div id="fullReport" class="max-w-full mx-auto bg-white rounded-xl shadow-md p-4 md:p-6">
         <h1 class="text-xl md:text-2xl font-bold text-gray-800 mb-6 text-center underline decoration-blue-500">
             Shift-Wise Product Sales Report
         </h1>
 
         <div class="mb-8 flex flex-wrap gap-4 items-center justify-center bg-blue-50 p-4 rounded-lg border border-blue-100">
-            <div class="flex flex-col">
-                <label class="text-sm font-semibold text-gray-600 mb-1">Filter by Date:</label>
-                <input type="date" id="dateSearch" onchange="filterData()" 
-                    class="border-2 border-blue-300 rounded-md p-2 focus:outline-none focus:border-blue-500">
-            </div>
-            <button onclick="resetFilter()" class="mt-5 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition">
-                Reset View
-            </button>
-        </div>
+    <div class="flex flex-col">
+        <label class="text-sm font-semibold text-gray-600 mb-1">From Date:</label>
+        <input type="date" id="fromDate" onchange="filterData()" 
+            class="border-2 border-blue-300 rounded-md p-2 focus:outline-none focus:border-blue-500">
+    </div>
+    <div class="flex flex-col">
+        <label class="text-sm font-semibold text-gray-600 mb-1">To Date:</label>
+        <input type="date" id="toDate" onchange="filterData()" 
+            class="border-2 border-blue-300 rounded-md p-2 focus:outline-none focus:border-blue-500">
+    </div>
+    <button onclick="resetFilter()" class="mt-5 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition">
+        Reset View
+    </button>
+    <button onclick="downloadFullPDF()" class="mt-5 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition flex items-center gap-2">
+    <span>📥</span> Save as PDF
+    </button>
+</div>
 
         <div id="tablesWrapper"></div>
         <div id="noDataMessage" class="hidden text-center py-20 text-gray-500 text-xl font-medium">
@@ -335,18 +344,66 @@
             wrapper.appendChild(summary);
         }
 
-        function filterData() {
-            const date = document.getElementById('dateSearch').value;
-            const filtered = !date ? allReadings : allReadings.filter(r => r.currentDate === date);
-            renderShiftWiseTables(filtered);
-            document.getElementById('noDataMessage').classList.toggle('hidden', filtered.length > 0);
-        }
+       function downloadFullPDF() {
+    const element = document.getElementById('fullReport');
+    
+    // Hide the buttons temporarily so they don't appear in the PDF
+    const buttons = element.querySelectorAll('button');
+    buttons.forEach(btn => btn.style.display = 'none');
+
+    const opt = {
+        margin:       [0.2, 0.2],
+        filename:     'Complete_Shift_Sales_Report.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { 
+            scale: 2, 
+            useCORS: true, 
+            letterRendering: true,
+            scrollX: 0,
+            scrollY: 0
+        },
+        jsPDF: { unit: 'px', format: [2550, 1500], orientation: 'landscape' }
+    };
+
+    // Generate PDF and then show buttons again
+    html2pdf().set(opt).from(element).save().then(() => {
+        buttons.forEach(btn => btn.style.display = 'inline-block');
+    });
+}
+
+       function filterData() {
+    const fromDate = document.getElementById('fromDate').value;
+    const toDate = document.getElementById('toDate').value;
+
+    const filtered = allReadings.filter(r => {
+        const readingDate = r.currentDate; // Your API provides date in YYYY-MM-DD format
+        
+        // If From Date is provided, check if reading is on or after it
+        if (fromDate && readingDate < fromDate) return false;
+        
+        // If To Date is provided, check if reading is on or before it
+        if (toDate && readingDate > toDate) return false;
+        
+        return true;
+    });
+
+    renderShiftWiseTables(filtered);
+    
+    // Toggle the "No Data" message based on results
+    const noDataMessage = document.getElementById('noDataMessage');
+    if (filtered.length === 0) {
+        noDataMessage.classList.remove('hidden');
+    } else {
+        noDataMessage.classList.add('hidden');
+    }
+}
 
         function resetFilter() {
-            document.getElementById('dateSearch').value = '';
-            renderShiftWiseTables(allReadings);
-            document.getElementById('noDataMessage').classList.add('hidden');
-        }
+    document.getElementById('fromDate').value = '';
+    document.getElementById('toDate').value = '';
+    renderShiftWiseTables(allReadings); //
+    document.getElementById('noDataMessage').classList.add('hidden');
+}
 
         window.onload = loadReadings;
     </script>
