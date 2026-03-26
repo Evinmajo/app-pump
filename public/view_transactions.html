@@ -60,9 +60,9 @@
             <div class="flex flex-col min-w-[140px] flex-1">
                 <label for="typeSelect" class="text-xs text-gray-600 mb-1 font-bold">Type:</label>
                 <select id="typeSelect" class="p-2.5 border border-gray-300 rounded-lg text-base w-full">
-                    <option value="all">All (Cr/Dr)</option>
+                    <option value="all">All (Cr/Cr Ret)</option>
                     <option value="credit">Credits Only</option>
-                    <option value="debit">Debits Only</option>
+                    <option value="debit">Credit Return Only</option>
                     <option value="expense">Expenses Only</option>
                 </select>
             </div>
@@ -193,7 +193,7 @@
 
         function updateSummary(type, cr, dr, ex) {
             if (type === 'all') {
-                transactionSummary.innerHTML = `Cr: ₹${cr.toFixed(2)} | Dr: ₹${dr.toFixed(2)} <br><span class="text-[#2c3e50]">Net Total: ₹${(cr - dr).toFixed(2)}</span>`;
+                transactionSummary.innerHTML = `Cr: ₹${cr.toFixed(2)} | Cr Ret: ₹${dr.toFixed(2)} <br><span class="text-[#2c3e50]">Net Total: ₹${(cr - dr).toFixed(2)}</span>`;
             } else if (type === 'expense') {
                 transactionSummary.innerHTML = `Total Expenses: ₹${ex.toFixed(2)}`;
             } else {

@@ -259,10 +259,10 @@
             </div>
 
             <div class="col-span-1">
-                <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Debit</h2>
+                <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Credit Return</h2>
                 <div id="debitEntriesContainer" class="space-y-3"></div>
                 <button type="button" onclick="addEntry('debit')" class="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-md transition duration-300 ease-in-out">
-                    Add Debit Entry
+                    Add Credit Return Entry
                 </button>
             </div>
         </div>
@@ -338,50 +338,74 @@
         let creditEntryCount = 0;
         let debitEntryCount = 0;
         let packedOilEntryCount = 0; 
-        let availableOilTypes = []; 
+        let availableOilTypes = [];
+        let availableParties = []; 
+        let availableExpenses = [];
         let expenseEntryCount = 0;
 
-        function addEntry(type, defaultName = '') {
-            let containerId;
-            if (type === 'credit') {
-                containerId = 'creditEntriesContainer';
-            } else if (type === 'debit') {
-                containerId = 'debitEntriesContainer';
-            } else {
-                containerId = 'expenseEntriesContainer'; // Added for expenses
-            }
-            const container = document.getElementById(containerId);
-            const entryDiv = document.createElement('div');
-            entryDiv.className = 'flex items-center gap-x-2 mb-3';
-            const nameInput = document.createElement('input');
-            nameInput.type = 'text';
-            nameInput.placeholder = 'Name';
-            nameInput.className = 'w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center dynamic-entry-name';
-            nameInput.value = defaultName;
-            const amountInput = document.createElement('input');
-            amountInput.type = 'number';
-            amountInput.placeholder = '0';
-            amountInput.value = '0';
-            amountInput.className = 'w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center dynamic-entry-amount';
-            const removeButton = document.createElement('button');
-            removeButton.textContent = 'Remove';
-            removeButton.className = 'ml-2 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-3 rounded-lg text-sm';
-            removeButton.type = 'button';
-            removeButton.onclick = () => container.removeChild(entryDiv);
-
-            if (type === 'credit') {
-                nameInput.id = `creditName_dynamic_${creditEntryCount++}`;
-            } else if (type === 'debit') {
-                nameInput.id = `debitName_dynamic_${debitEntryCount++}`;
-            } else {
-                nameInput.id = `expenseName_dynamic_${expenseEntryCount++}`; // Added for expenses
-            }
-
-            entryDiv.appendChild(nameInput);
-            entryDiv.appendChild(amountInput);
-            entryDiv.appendChild(removeButton);
-            container.appendChild(entryDiv);
+        async function fetchExpenses() {
+    try {
+        const response = await fetch('/api/expenses');
+        if (response.ok) {
+            const data = await response.json();
+            availableExpenses = data.map(exp => exp.name);
         }
+    } catch (error) {
+        console.error('Error fetching expenses:', error);
+    }
+}
+
+        function addEntry(type, defaultName = '') {
+    let containerId;
+    if (type === 'credit') {
+        containerId = 'creditEntriesContainer';
+    } else if (type === 'debit') {
+        containerId = 'debitEntriesContainer';
+    } else {
+        containerId = 'expenseEntriesContainer';
+    }
+    
+    const container = document.getElementById(containerId);
+    const entryDiv = document.createElement('div');
+    entryDiv.className = 'flex items-center gap-x-2 mb-3';
+
+    // NEW LOGIC: Use Select for Credit, Debit, AND Expense
+    const nameElement = document.createElement('select');
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = ""; 
+    defaultOpt.textContent = type === 'expense' ? "Select Expense" : "Select Name"; 
+    defaultOpt.disabled = true; 
+    defaultOpt.selected = true;
+    nameElement.appendChild(defaultOpt);
+    
+    // Choose which list to use based on type
+    const listToUse = type === 'expense' ? availableExpenses : availableParties;
+
+    listToUse.forEach(name => {
+        const option = document.createElement('option');
+        option.value = name; 
+        option.textContent = name;
+        if (name === defaultName) option.selected = true; // Auto-select if default provided
+        nameElement.appendChild(option);
+    });
+
+    nameElement.className = 'w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center dynamic-entry-name';
+
+    const amountInput = document.createElement('input');
+    amountInput.type = 'number';
+    amountInput.placeholder = '0';
+    amountInput.className = 'w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center dynamic-entry-amount';
+
+    const removeButton = document.createElement('button');
+    removeButton.textContent = 'X';
+    removeButton.className = 'ml-2 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg';
+    removeButton.onclick = () => container.removeChild(entryDiv);
+
+    entryDiv.appendChild(nameElement);
+    entryDiv.appendChild(amountInput);
+    entryDiv.appendChild(removeButton);
+    container.appendChild(entryDiv);
+}
 
         function addPackedOilEntry() {
             const container = document.getElementById('packedOilEntriesContainer');
@@ -409,6 +433,17 @@
             removeButton.onclick = () => container.removeChild(entryDiv);
             entryDiv.appendChild(nameSelect); entryDiv.appendChild(quantityInput); entryDiv.appendChild(amountInput); entryDiv.appendChild(removeButton);
             container.appendChild(entryDiv);
+        }
+        async function fetchParties() {
+            try {
+                const response = await fetch('/api/parties');
+                if (response.ok) {
+                    const data = await response.json();
+                    availableParties = data.map(party => party.name);
+                }
+            } catch (error) {
+                console.error('Error fetching parties:', error);
+            }
         }
 
         async function fetchOilTypes() {
@@ -525,8 +560,8 @@ document.querySelectorAll('.denom-input').forEach(input => {
             loadAndDisplayPrices();
             loadDefaultReadings();
             fetchOilTypes();
-            const defaultNames = ["GPAY", "CARD", "PAYTM"];
-            defaultNames.forEach(name => { addEntry('credit', name); });
+            fetchParties();
+            fetchExpenses();
         });
 
         async function saveAndNavigate() {

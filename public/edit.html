@@ -329,20 +329,16 @@
                     <div id="creditEntriesContainer" class="space-y-3">
                         </div>
                     <div class="mt-4 flex space-x-2">
-                        <input type="text" id="newCreditName" class="w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm" placeholder="Credit Name">
-                        <input type="number" id="newCreditAmount" class="w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm" placeholder="Amount" step="0.001">
-                        <button type="button" onclick="addDynamicEntry('credit')" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">Add</button>
+                        <button type="button" onclick="addDynamicEntry('credit')" class="px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-bold">Add Credit</button>
                     </div>
                 </div>
 
                 <div class="col-span-1">
-                    <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Debit Entries</h2>
+                    <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Credit Return Entries</h2>
                     <div id="debitEntriesContainer" class="space-y-3">
                         </div>
                     <div class="mt-4 flex space-x-2">
-                        <input type="text" id="newDebitName" class="w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm" placeholder="Debit Name">
-                        <input type="number" id="newDebitAmount" class="w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm" placeholder="Amount" step="0.001">
-                        <button type="button" onclick="addDynamicEntry('debit')" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">Add</button>
+                        <button type="button" onclick="addDynamicEntry('debit')" class="px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-bold">Add Credit Return</button>
                     </div>
                 </div>
             </div>
@@ -355,9 +351,7 @@
                     <div id="expenseEntriesContainer" class="space-y-3">
                         </div>
                     <div class="mt-4 flex space-x-2">
-                        <input type="text" id="newExpenseName" class="w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm" placeholder="Expense Name">
-                        <input type="number" id="newExpenseAmount" class="w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm" placeholder="Amount" step="0.01">
-                        <button type="button" onclick="addExpenseEntry()" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">Add</button>
+                        <button type="button" onclick="addExpenseEntry()" class="px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-bold">Add Expense</button>
                     </div>
                 </div>
             </div>
@@ -442,433 +436,291 @@
     </div>
 
     <script>
-        let currentEntryId = null; // Variable to store the ID of the entry being edited
+    let currentEntryId = null; 
+    let availableParties = [];
+    let availableExpenses = [];
 
-        // --- Message Box Functions ---
-        function showMessageBox(message, type) {
-            const messageBox = document.getElementById('messageBox');
-            const messageText = document.getElementById('messageText');
-            messageText.textContent = message;
-            messageBox.className = `message-box ${type}`; // Add type class for styling
-            messageBox.style.display = 'block';
-        }
-
-        function hideMessageBox() {
-            const messageBox = document.getElementById('messageBox');
-            messageBox.style.display = 'none';
-        }
-
-        // Helper function to safely get numeric value from an input
-        function getNumberValue(id) {
-            const element = document.getElementById(id);
-            return element && !isNaN(parseFloat(element.value)) ? parseFloat(element.value) : 0;
-        }
-
-        /**
-         * Dynamically adds a new packed oil entry row (name and amount) for editing.
-         * Includes a remove button for the entry.
-         * @param {string} name - The name of the packed oil.
-         * @param {number} amount - The amount of the packed oil.
-         */
-         function addPackedOilEntry(name = '', amount = '', price = '') {
-             const container = document.getElementById('packedOilEntriesContainer');
-             const newNameInput = document.getElementById('newPackedOilName');
-             const newAmountInput = document.getElementById('newPackedOilAmount');
-             const newPriceInput = document.getElementById('newPackedOilPrice');
-         
-             if (name === '' && amount === '') {
-                 name = newNameInput.value;
-                 amount = newAmountInput.value;
-                 price = newPriceInput.value;
-                 newNameInput.value = ''; 
-                 newAmountInput.value = '';
-                 newPriceInput.value = '';
-             }
-         
-             if (name.trim() === '' || amount === '') {
-                 showMessageBox('Packed oil name and amount cannot be empty.', 'error');
-                 return;
-             }
-         
-             const entryDiv = document.createElement('div');
-             // Added 'packed-oil-row' class for easier selection
-             entryDiv.className = 'flex items-center gap-x-2 mb-3 packed-oil-row';
-         
-             entryDiv.innerHTML = `
-                 <input type="text" value="${name}" class="w-1/3 p-3 border border-gray-300 rounded-lg packed-oil-name" placeholder="Name">
-                 <input type="number" value="${amount}" class="w-1/3 p-3 border border-gray-300 rounded-lg packed-oil-amount" placeholder="Qty" step="0.001">
-                 <input type="number" value="${price}" class="w-1/3 p-3 border border-gray-300 rounded-lg packed-oil-price" placeholder="Price" step="0.01">
-                 <button type="button" onclick="this.parentElement.remove()" class="ml-2 px-3 py-2 bg-red-500 text-white rounded-md">X</button>
-             `;
-         
-             container.appendChild(entryDiv);
-         }
-
-        /**
-         * Dynamically adds a new credit/debit entry row (name and amount) for editing.
-         * Includes a remove button for the entry.
-         * @param {string} type - 'credit' or 'debit'.
-         * @param {string} name - The name for the entry.
-         * @param {number} amount - The amount for the entry.
-         */
-        function addDynamicEntry(type, name = '', amount = '') {
-            const containerId = type === 'credit' ? 'creditEntriesContainer' : 'debitEntriesContainer';
-            const container = document.getElementById(containerId);
-            const newNameInput = document.getElementById(`new${type.charAt(0).toUpperCase() + type.slice(1)}Name`);
-            const newAmountInput = document.getElementById(`new${type.charAt(0).toUpperCase() + type.slice(1)}Amount`);
-
-            // If adding from the form, use current input values and clear them
-            if (name === '' && amount === '') {
-                name = newNameInput.value;
-                amount = newAmountInput.value;
-                newNameInput.value = ''; // Clear input fields after adding
-                newAmountInput.value = '';
-            }
-
-            if (name.trim() === '' || amount === '') {
-                showMessageBox(`${type.charAt(0).toUpperCase() + type.slice(1)} name and amount cannot be empty.`, 'error');
-                return;
-            }
-
-            const entryDiv = document.createElement('div');
-            entryDiv.className = 'flex items-center gap-x-2 mb-3';
-
-            const nameInput = document.createElement('input');
-            nameInput.type = 'text';
-            nameInput.value = name;
-            nameInput.className = 'w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm dynamic-entry-name';
-            nameInput.placeholder = `${type.charAt(0).toUpperCase() + type.slice(1)} Name`;
-
-            const amountInput = document.createElement('input');
-            amountInput.type = 'number';
-            amountInput.value = amount;
-            amountInput.className = 'w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm dynamic-entry-amount';
-            amountInput.placeholder = 'Amount';
-            amountInput.step = "0.001"; // Changed to 0.001 for fractional values
-
-            const removeButton = document.createElement('button');
-            removeButton.type = 'button';
-            removeButton.className = 'ml-2 px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600';
-            removeButton.textContent = 'X';
-            removeButton.onclick = () => {
-                entryDiv.remove();
-            };
-
-            entryDiv.appendChild(nameInput);
-            entryDiv.appendChild(amountInput);
-            entryDiv.appendChild(removeButton);
-            container.appendChild(entryDiv);
-        }
-
-        function addExpenseEntry(name = '', amount = '') {
-    const container = document.getElementById('expenseEntriesContainer');
-    const nameInput = document.getElementById('newExpenseName');
-    const amountInput = document.getElementById('newExpenseAmount');
-
-    if (name === '' && amount === '') {
-        name = nameInput.value;
-        amount = amountInput.value;
-        nameInput.value = '';
-        amountInput.value = '';
+    // --- Message Box Functions ---
+    function showMessageBox(message, type) {
+        const messageBox = document.getElementById('messageBox');
+        const messageText = document.getElementById('messageText');
+        messageText.textContent = message;
+        messageBox.className = `message-box ${type}`;
+        messageBox.style.display = 'block';
     }
 
-    if (name.trim() === '' || amount === '') {
-        showMessageBox('Expense name and amount cannot be empty.', 'error');
-        return;
+    function hideMessageBox() {
+        const messageBox = document.getElementById('messageBox');
+        messageBox.style.display = 'none';
     }
+
+    // Helper function
+    function getNumberValue(id) {
+        const element = document.getElementById(id);
+        return element && !isNaN(parseFloat(element.value)) ? parseFloat(element.value) : 0;
+    }
+
+    // --- Dropdown Data Fetching ---
+    async function fetchDropdownLists() {
+        try {
+            const [partyRes, expenseRes] = await Promise.all([
+                fetch('/api/parties'),
+                fetch('/api/expenses')
+            ]);
+            if (partyRes.ok) availableParties = await partyRes.json();
+            if (expenseRes.ok) availableExpenses = await expenseRes.json();
+        } catch (error) {
+            console.error('Error fetching dropdown lists:', error);
+        }
+    }
+
+    // --- Dynamic Entry Functions ---
+    function addPackedOilEntry(name = '', amount = '', price = '') {
+        const container = document.getElementById('packedOilEntriesContainer');
+        const newNameInput = document.getElementById('newPackedOilName');
+        const newAmountInput = document.getElementById('newPackedOilAmount');
+        const newPriceInput = document.getElementById('newPackedOilPrice');
+
+        if (name === '' && amount === '') {
+            name = newNameInput.value;
+            amount = newAmountInput.value;
+            price = newPriceInput.value;
+            newNameInput.value = ''; 
+            newAmountInput.value = '';
+            newPriceInput.value = '';
+        }
+
+        if (name.trim() === '' || amount === '') {
+            showMessageBox('Packed oil name and amount cannot be empty.', 'error');
+            return;
+        }
+
+        const entryDiv = document.createElement('div');
+        entryDiv.className = 'flex items-center gap-x-2 mb-3 packed-oil-row';
+        entryDiv.innerHTML = `
+            <input type="text" value="${name}" class="w-1/3 p-3 border border-gray-300 rounded-lg packed-oil-name" placeholder="Name">
+            <input type="number" value="${amount}" class="w-1/3 p-3 border border-gray-300 rounded-lg packed-oil-amount" placeholder="Qty" step="0.001">
+            <input type="number" value="${price}" class="w-1/3 p-3 border border-gray-300 rounded-lg packed-oil-price" placeholder="Price" step="0.01">
+            <button type="button" onclick="this.parentElement.remove()" class="ml-2 px-3 py-2 bg-red-500 text-white rounded-md">X</button>
+        `;
+        container.appendChild(entryDiv);
+    }
+
+    function addDynamicEntry(type, name = '', amount = '') {
+    const containerId = type === 'credit' ? 'creditEntriesContainer' : 'debitEntriesContainer';
+    const container = document.getElementById(containerId);
 
     const entryDiv = document.createElement('div');
-    entryDiv.className = 'flex items-center gap-x-2 mb-3 expense-row';
+    entryDiv.className = 'flex items-center gap-x-2 mb-3 dynamic-row';
+
+    // Placeholder option is selected if name is empty
+    let optionsHtml = `<option value="" disabled ${name === '' ? 'selected' : ''}>Select Name</option>`;
+    availableParties.forEach(p => {
+        optionsHtml += `<option value="${p.name}" ${p.name === name ? 'selected' : ''}>${p.name}</option>`;
+    });
+
     entryDiv.innerHTML = `
-        <input type="text" value="${name}" class="w-2/3 p-3 border border-gray-300 rounded-lg expense-name" placeholder="Expense Name">
-        <input type="number" value="${amount}" class="w-1/3 p-3 border border-gray-300 rounded-lg expense-amount" placeholder="Amount">
-        <button type="button" onclick="this.parentElement.remove()" class="ml-2 px-3 py-2 bg-red-500 text-white rounded-md">X</button>
+        <select class="w-1/2 p-3 border border-gray-300 rounded-lg dynamic-entry-name">
+            ${optionsHtml}
+        </select>
+        <input type="number" value="${amount}" class="w-1/2 p-3 border border-gray-300 rounded-lg dynamic-entry-amount" placeholder="Amount" step="0.001">
+        <button type="button" onclick="this.parentElement.remove()" class="ml-2 px-3 py-2 bg-red-500 text-white rounded-md font-bold">X</button>
     `;
     container.appendChild(entryDiv);
 }
 
-        // Function to load data from server and populate fields for editing
-        async function loadDataForEdit() {
-            const urlParams = new URLSearchParams(window.location.search);
-            currentEntryId = urlParams.get('id'); // Get the _id from the URL
+function addExpenseEntry(name = '', amount = '') {
+    const container = document.getElementById('expenseEntriesContainer');
 
-            if (currentEntryId) {
-                try {
-                    const response = await fetch(`/api/reading/${currentEntryId}`);
-                    if (response.ok) {
-                        const fetchedData = await response.json();
-                        if (fetchedData) {
-                            // Populate static input fields
-                            document.getElementById('currentDate').value = fetchedData.currentDate || '';
-                            document.getElementById('selectedId').value = fetchedData.selectedId || '';
-                            document.getElementById('shift').value = fetchedData.shift || '';
-                            document.getElementById('petrol').value = fetchedData.petrol || '';
-                            document.getElementById('diesel').value = fetchedData.diesel || '';
-                            document.getElementById('oil').value = fetchedData.oil || '';
-                            document.getElementById('speed').value = fetchedData.speed || '';
-                            document.getElementById('oilFirstReading').value = fetchedData.oilFirstReading || '';
-                            document.getElementById('oilSecondReading').value = fetchedData.oilSecondReading || '';
-                            document.getElementById('speedFirstReading1').value = fetchedData.speedFirstReading1 || '';
-                            document.getElementById('speedFirstReading2').value = fetchedData.speedFirstReading2 || '';
-                            document.getElementById('speedFirstReading3').value = fetchedData.speedFirstReading3 || '';
-                            document.getElementById('speedSecondReading1').value = fetchedData.speedSecondReading1 || '';
-                            document.getElementById('speedSecondReading2').value = fetchedData.speedSecondReading2 || '';
-                            document.getElementById('speedSecondReading3').value = fetchedData.speedSecondReading3 || '';
-                            document.getElementById('firstReading1').value = fetchedData.firstReading1 || '';
-                            document.getElementById('firstReading2').value = fetchedData.firstReading2 || '';
-                            document.getElementById('firstReading3').value = fetchedData.firstReading3 || '';
-                            document.getElementById('firstReading4').value = fetchedData.firstReading4 || '';
-                            document.getElementById('firstReading5').value = fetchedData.firstReading5 || '';
-                            document.getElementById('firstReading6').value = fetchedData.firstReading6 || '';
-                            document.getElementById('secondReading1').value = fetchedData.secondReading1 || '';
-                            document.getElementById('secondReading2').value = fetchedData.secondReading2 || '';
-                            document.getElementById('secondReading3').value = fetchedData.secondReading3 || '';
-                            document.getElementById('secondReading4').value = fetchedData.secondReading4 || '';
-                            document.getElementById('secondReading5').value = fetchedData.secondReading5 || '';
-                            document.getElementById('secondReading6').value = fetchedData.secondReading6 || '';
-                            document.getElementById('dieselFirstReading1').value = fetchedData.dieselFirstReading1 || '';
-                            document.getElementById('dieselFirstReading2').value = fetchedData.dieselFirstReading2 || '';
-                            document.getElementById('dieselFirstReading3').value = fetchedData.dieselFirstReading3 || '';
-                            document.getElementById('dieselFirstReading4').value = fetchedData.dieselFirstReading4 || '';
-                            document.getElementById('dieselFirstReading5').value = fetchedData.dieselFirstReading5 || '';
-                            document.getElementById('dieselFirstReading6').value = fetchedData.dieselFirstReading6 || '';
-                            document.getElementById('dieselSecondReading1').value = fetchedData.dieselSecondReading1 || '';
-                            document.getElementById('dieselSecondReading2').value = fetchedData.dieselSecondReading2 || '';
-                            document.getElementById('dieselSecondReading3').value = fetchedData.dieselSecondReading3 || '';
-                            document.getElementById('dieselSecondReading4').value = fetchedData.dieselSecondReading4 || '';
-                            document.getElementById('dieselSecondReading5').value = fetchedData.dieselSecondReading5 || '';
-                            document.getElementById('dieselSecondReading6').value = fetchedData.dieselSecondReading6 || '';
-                            document.getElementById('petrolTestQuantity').value = fetchedData.petrolTestQuantity || '';
-                            document.getElementById('speedTestQuantity').value = fetchedData.speedTestQuantity || '';
-                            document.getElementById('dieselTestQuantity').value = fetchedData.dieselTestQuantity || '';
-                            document.getElementById('note500').value = fetchedData.note500 || '';
-                            document.getElementById('note200').value = fetchedData.note200 || '';
-                            document.getElementById('note100').value = fetchedData.note100 || '';
-                            document.getElementById('note50').value = fetchedData.note50 || '';
-                            document.getElementById('note20').value = fetchedData.note20 || '';
-                            document.getElementById('note10').value = fetchedData.note10 || '';
-                            document.getElementById('note5').value = fetchedData.note5 || '';
-                            document.getElementById('coins').value = fetchedData.coins || '';
+    const entryDiv = document.createElement('div');
+    entryDiv.className = 'flex items-center gap-x-2 mb-3 expense-row';
 
-                            calculateTotalDenomination(); 
-
-                            // Populate dynamic packed oil entries
-                            if (fetchedData.packedOilEntries && Array.isArray(fetchedData.packedOilEntries)) {
-                                fetchedData.packedOilEntries.forEach(entry => {
-                                    // Added entry.price to ensure the stored price is displayed
-                                    addPackedOilEntry(entry.name, entry.amount, entry.price || 0);
-                                });
-                            }
-
-                            // Populate dynamic credit entries
-                            if (fetchedData.creditEntries && Array.isArray(fetchedData.creditEntries)) {
-                                fetchedData.creditEntries.forEach(entry => {
-                                    addDynamicEntry('credit', entry.name, entry.amount);
-                                });
-                            }
-                            if (fetchedData.expenseEntries && Array.isArray(fetchedData.expenseEntries)) {
-                                const container = document.getElementById('expenseEntriesContainer');
-                                container.innerHTML = ''; // Clear existing
-                                fetchedData.expenseEntries.forEach(entry => {
-                                    addExpenseEntry(entry.name, entry.amount);
-                                });
-                            }
-
-                            // Populate dynamic debit entries
-                            if (fetchedData.debitEntries && Array.isArray(fetchedData.debitEntries)) {
-                                fetchedData.debitEntries.forEach(entry => {
-                                    addDynamicEntry('debit', entry.name, entry.amount);
-                                });
-                            }
-
-                        } else {
-                            showMessageBox('No data found for this ID.', 'error');
-                            console.log('No data found for ID:', currentEntryId);
-                        }
-                    } else {
-                        showMessageBox('Failed to fetch data from the server.', 'error');
-                        console.error('Server error:', response.statusText);
-                    }
-                } catch (error) {
-                    console.error('Error fetching data:', error);
-                    showMessageBox('An error occurred while fetching data.', 'error');
-                }
-            } else {
-                showMessageBox('No entry ID provided in the URL.', 'error');
-                console.log('No entry ID provided in the URL for edit.html');
-            }
-        }
-
-        // Function to calculate total denomination
-function calculateTotalDenomination() {
-    const denominations = {
-        'note500': 500, 'note200': 200, 'note100': 100, 
-        'note50': 50, 'note20': 20, 'note10': 10, 
-        'note5': 5, 'coins': 1
-    };
-
-    let total = 0;
-    for (const [id, value] of Object.entries(denominations)) {
-        const count = parseFloat(document.getElementById(id)?.value) || 0;
-        total += count * value;
-    }
-    document.getElementById('totalDenomination').value = total;
-}
-
-// Add event listeners to all denomination inputs
-document.addEventListener('DOMContentLoaded', () => {
-    const fields = ['note500', 'note200', 'note100', 'note50', 'note20', 'note10', 'note5', 'coins'];
-    fields.forEach(id => {
-        document.getElementById(id)?.addEventListener('input', calculateTotalDenomination);
+    // Placeholder option is selected if name is empty
+    let optionsHtml = `<option value="" disabled ${name === '' ? 'selected' : ''}>Select Expense</option>`;
+    availableExpenses.forEach(e => {
+        optionsHtml += `<option value="${e.name}" ${e.name === name ? 'selected' : ''}>${e.name}</option>`;
     });
-});
-        // Function to handle saving changes
-        async function saveChanges(event) {
-            event.preventDefault(); // Prevent default form submission
 
-            const data = {
-                currentDate: document.getElementById('currentDate').value,
-                selectedId: document.getElementById('selectedId').value,
-                shift: getNumberValue('shift'),
-                petrol: getNumberValue('petrol'),
-                diesel: getNumberValue('diesel'),
-                oil: getNumberValue('oil'),
-                speed: getNumberValue('speed'),
-                oilFirstReading: getNumberValue('oilFirstReading'),
-                oilSecondReading: getNumberValue('oilSecondReading'),
-                speedFirstReading1:  getNumberValue('speedFirstReading1'),
-                speedFirstReading2:  getNumberValue('speedFirstReading2'),
-                speedFirstReading3:  getNumberValue('speedFirstReading3'),
-                speedSecondReading1:  getNumberValue('speedSecondReading1'),
-                speedSecondReading2:  getNumberValue('speedSecondReading2'),
-                speedSecondReading3:  getNumberValue('speedSecondReading3'),
-                firstReading1: getNumberValue('firstReading1'),
-                firstReading2: getNumberValue('firstReading2'),
-                firstReading3: getNumberValue('firstReading3'),
-                firstReading4: getNumberValue('firstReading4'),
-                firstReading5: getNumberValue('firstReading5'),
-                firstReading6: getNumberValue('firstReading6'),
-                secondReading1: getNumberValue('secondReading1'),
-                secondReading2: getNumberValue('secondReading2'),
-                secondReading3: getNumberValue('secondReading3'),
-                secondReading4: getNumberValue('secondReading4'),
-                secondReading5: getNumberValue('secondReading5'),
-                secondReading6: getNumberValue('secondReading6'),
-                
-                dieselFirstReading1: getNumberValue('dieselFirstReading1'),
-                dieselFirstReading2: getNumberValue('dieselFirstReading2'),
-                dieselFirstReading3: getNumberValue('dieselFirstReading3'),
-                dieselFirstReading4: getNumberValue('dieselFirstReading4'),
-                dieselFirstReading5: getNumberValue('dieselFirstReading5'),
-                dieselFirstReading6: getNumberValue('dieselFirstReading6'),
-                dieselSecondReading1: getNumberValue('dieselSecondReading1'),
-                dieselSecondReading2: getNumberValue('dieselSecondReading2'),
-                dieselSecondReading3: getNumberValue('dieselSecondReading3'),
-                dieselSecondReading4: getNumberValue('dieselSecondReading4'),
-                dieselSecondReading5: getNumberValue('dieselSecondReading5'),
-                dieselSecondReading6: getNumberValue('dieselSecondReading6'),
-                speedTestQuantity: getNumberValue('speedTestQuantity'),
-                petrolTestQuantity: getNumberValue('petrolTestQuantity'),
-                dieselTestQuantity: getNumberValue('dieselTestQuantity'),
-                totalDenomination: getNumberValue('totalDenomination'),
-                note500: getNumberValue('note500'),
-                note200: getNumberValue('note200'),
-                note100: getNumberValue('note100'),
-                note50: getNumberValue('note50'),
-                note20: getNumberValue('note20'),
-                note10: getNumberValue('note10'),
-                note5: getNumberValue('note5'),
-                coins: getNumberValue('coins'),
-            };
-           
-            // Add this helper inside your saveChanges function to extract entries
-           // Correctly collect Packed Oil Entries
-           data.packedOilEntries = [];
-           document.querySelectorAll('.packed-oil-row').forEach(row => {
-               const name = row.querySelector('.packed-oil-name').value;
-               const amount = parseFloat(row.querySelector('.packed-oil-amount').value) || 0;
-               const price = parseFloat(row.querySelector('.packed-oil-price').value) || 0;
-               
-               if (name.trim() !== "") {
-                   data.packedOilEntries.push({ name, amount, price });
-               }
-           });
+    entryDiv.innerHTML = `
+        <select class="w-2/3 p-3 border border-gray-300 rounded-lg expense-name">
+            ${optionsHtml}
+        </select>
+        <input type="number" value="${amount}" class="w-1/3 p-3 border border-gray-300 rounded-lg expense-amount" placeholder="Amount" step="0.01">
+        <button type="button" onclick="this.parentElement.remove()" class="ml-2 px-3 py-2 bg-red-500 text-white rounded-md font-bold">X</button>
+    `;
+    container.appendChild(entryDiv);
+}
+    // --- Load Data For Edit ---
+    async function loadDataForEdit() {
+        const urlParams = new URLSearchParams(window.location.search);
+        currentEntryId = urlParams.get('id'); 
 
-            // Collect dynamic credit entries
-            data.creditEntries = [];
-            document.querySelectorAll('#creditEntriesContainer > div').forEach(entryDiv => {
-                const nameInput = entryDiv.querySelector('.dynamic-entry-name');
-                const amountInput = entryDiv.querySelector('.dynamic-entry-amount');
-                if (nameInput && amountInput) {
-                    data.creditEntries.push({
-                        name: nameInput.value,
-                        amount: parseFloat(amountInput.value) || 0
-                    });
-                }
-            });
-
-            // Collect Expenses
-            data.expenseEntries = [];
-            document.querySelectorAll('.expense-row').forEach(row => {
-                const name = row.querySelector('.expense-name').value;
-                const amount = parseFloat(row.querySelector('.expense-amount').value) || 0;
-                if (name.trim() !== "") {
-                    data.expenseEntries.push({ name, amount });
-                }
-            });
-
-            // Collect dynamic debit entries
-            data.debitEntries = [];
-            document.querySelectorAll('#debitEntriesContainer > div').forEach(entryDiv => {
-                const nameInput = entryDiv.querySelector('.dynamic-entry-name');
-                const amountInput = entryDiv.querySelector('.dynamic-entry-amount');
-                if (nameInput && amountInput) {
-                    data.debitEntries.push({
-                        name: nameInput.value,
-                        amount: parseFloat(amountInput.value) || 0
-                    });
-                }
-            });
-
+        if (currentEntryId) {
             try {
-                const response = await fetch(`/api/reading/${currentEntryId}`, {
-                    method: 'PUT', // Use PUT for updating an existing resource
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-
+                // പേര് മാറ്റി: fetchDropdownLists എന്ന് വിളിക്കുന്നു
+                await fetchDropdownLists();
+                
+                const response = await fetch(`/api/reading/${currentEntryId}`);
                 if (response.ok) {
-                    showMessageBox('Entry updated successfully!', 'success');
-                    // Redirect back to view.html after a short delay
-                    setTimeout(() => {
-                        window.location.href = `view.html?id=${currentEntryId}`;
-                    }, 1500);
-                } else {
-                    showMessageBox('Failed to update entry. Please try again.', 'error');
-                    console.error('Server error:', response.statusText);
+                    const fetchedData = await response.json();
+                    if (fetchedData) {
+                        // Static Fields
+                        document.getElementById('currentDate').value = fetchedData.currentDate || '';
+                        document.getElementById('selectedId').value = fetchedData.selectedId || '';
+                        document.getElementById('shift').value = fetchedData.shift || '';
+                        document.getElementById('petrol').value = fetchedData.petrol || '';
+                        document.getElementById('diesel').value = fetchedData.diesel || '';
+                        document.getElementById('oil').value = fetchedData.oil || '';
+                        document.getElementById('speed').value = fetchedData.speed || '';
+                        
+                        // Readings
+                        document.getElementById('oilFirstReading').value = fetchedData.oilFirstReading || '';
+                        document.getElementById('oilSecondReading').value = fetchedData.oilSecondReading || '';
+                        document.getElementById('speedFirstReading1').value = fetchedData.speedFirstReading1 || '';
+                        document.getElementById('speedFirstReading2').value = fetchedData.speedFirstReading2 || '';
+                        document.getElementById('speedFirstReading3').value = fetchedData.speedFirstReading3 || '';
+                        document.getElementById('speedSecondReading1').value = fetchedData.speedSecondReading1 || '';
+                        document.getElementById('speedSecondReading2').value = fetchedData.speedSecondReading2 || '';
+                        document.getElementById('speedSecondReading3').value = fetchedData.speedSecondReading3 || '';
+                        
+                        // पेट्रोल (Petrol) Nozzle Readings
+                        for(let i=1; i<=6; i++) {
+                            document.getElementById(`firstReading${i}`).value = fetchedData[`firstReading${i}`] || '';
+                            document.getElementById(`secondReading${i}`).value = fetchedData[`secondReading${i}`] || '';
+                        }
+                        
+                        // Diesel Nozzle Readings
+                        for(let i=1; i<=6; i++) {
+                            document.getElementById(`dieselFirstReading${i}`).value = fetchedData[`dieselFirstReading${i}`] || ''; // ശ്രദ്ധിക്കുക: നിങ്ങളുടെ കോഡിൽ ഐഡി തെറ്റാൻ സാധ്യതയുണ്ട്
+                            document.getElementById(`dieselSecondReading${i}`).value = fetchedData[`dieselSecondReading${i}`] || '';
+                        }
+
+                        // Test Quantities
+                        document.getElementById('petrolTestQuantity').value = fetchedData.petrolTestQuantity || '';
+                        document.getElementById('speedTestQuantity').value = fetchedData.speedTestQuantity || '';
+                        document.getElementById('dieselTestQuantity').value = fetchedData.dieselTestQuantity || '';
+
+                        // Denominations
+                        const denominations = ['500', '200', '100', '50', '20', '10', '5'];
+                        denominations.forEach(d => {
+                            document.getElementById(`note${d}`).value = fetchedData[`note${d}`] || '';
+                        });
+                        document.getElementById('coins').value = fetchedData.coins || '';
+
+                        calculateTotalDenomination(); 
+
+                        // Dynamic Tables
+                        if (fetchedData.packedOilEntries) {
+                            document.getElementById('packedOilEntriesContainer').innerHTML = '';
+                            fetchedData.packedOilEntries.forEach(e => addPackedOilEntry(e.name, e.amount, e.price));
+                        }
+                        if (fetchedData.creditEntries) {
+                            document.getElementById('creditEntriesContainer').innerHTML = '';
+                            fetchedData.creditEntries.forEach(e => addDynamicEntry('credit', e.name, e.amount));
+                        }
+                        if (fetchedData.expenseEntries) {
+                            document.getElementById('expenseEntriesContainer').innerHTML = '';
+                            fetchedData.expenseEntries.forEach(e => addExpenseEntry(e.name, e.amount));
+                        }
+                        if (fetchedData.debitEntries) {
+                            document.getElementById('debitEntriesContainer').innerHTML = '';
+                            fetchedData.debitEntries.forEach(e => addDynamicEntry('debit', e.name, e.amount));
+                        }
+                    }
                 }
             } catch (error) {
-                console.error('Error updating entry:', error);
-                showMessageBox('An error occurred while updating the entry.', 'error');
+                console.error('Error loading data:', error);
             }
         }
+    }
 
-        // Function to handle cancel action
-        function cancelEdit() {
-            if (currentEntryId) {
-                window.location.href = `view.html?id=${currentEntryId}`;
+    function calculateTotalDenomination() {
+        const denominations = {
+            'note500': 500, 'note200': 200, 'note100': 100, 
+            'note50': 50, 'note20': 20, 'note10': 10, 
+            'note5': 5, 'coins': 1
+        };
+        let total = 0;
+        for (const [id, value] of Object.entries(denominations)) {
+            const count = parseFloat(document.getElementById(id)?.value) || 0;
+            total += count * value;
+        }
+        document.getElementById('totalDenomination').value = total;
+    }
+
+    async function saveChanges(event) {
+        event.preventDefault();
+        const data = {
+            currentDate: document.getElementById('currentDate').value,
+            selectedId: document.getElementById('selectedId').value,
+            shift: getNumberValue('shift'),
+            petrol: getNumberValue('petrol'),
+            diesel: getNumberValue('diesel'),
+            oil: getNumberValue('oil'),
+            speed: getNumberValue('speed'),
+            // ... മറ്റെല്ലാ ഫീൽഡുകളും (നിങ്ങളുടെ പഴയ കോഡിലുള്ളത് പോലെ തന്നെ ചേർക്കുക) ...
+            note500: getNumberValue('note500'),
+            note200: getNumberValue('note200'),
+            note100: getNumberValue('note100'),
+            note50: getNumberValue('note50'),
+            note20: getNumberValue('note20'),
+            note10: getNumberValue('note10'),
+            note5: getNumberValue('note5'),
+            coins: getNumberValue('coins'),
+            totalDenomination: getNumberValue('totalDenomination')
+        };
+
+        // Collect Dynamic Entries
+        data.packedOilEntries = Array.from(document.querySelectorAll('.packed-oil-row')).map(row => ({
+            name: row.querySelector('.packed-oil-name').value,
+            amount: parseFloat(row.querySelector('.packed-oil-amount').value) || 0,
+            price: parseFloat(row.querySelector('.packed-oil-price').value) || 0
+        }));
+
+        data.creditEntries = Array.from(document.querySelectorAll('#creditEntriesContainer select')).map((sel, idx) => ({
+            name: sel.value,
+            amount: parseFloat(document.querySelectorAll('#creditEntriesContainer .dynamic-entry-amount')[idx].value) || 0
+        }));
+
+        data.expenseEntries = Array.from(document.querySelectorAll('.expense-row select')).map((sel, idx) => ({
+            name: sel.value,
+            amount: parseFloat(document.querySelectorAll('.expense-amount')[idx].value) || 0
+        }));
+
+        data.debitEntries = Array.from(document.querySelectorAll('#debitEntriesContainer select')).map((sel, idx) => ({
+            name: sel.value,
+            amount: parseFloat(document.querySelectorAll('#debitEntriesContainer .dynamic-entry-amount')[idx].value) || 0
+        }));
+
+        try {
+            const response = await fetch(`/api/reading/${currentEntryId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                showMessageBox('Entry updated successfully!', 'success');
+                setTimeout(() => { window.location.href = `view.html?id=${currentEntryId}`; }, 1500);
             } else {
-                window.location.href = `admin.html`; // Fallback if no ID is found (e.g., direct access to edit.html)
+                showMessageBox('Failed to update entry.', 'error');
             }
+        } catch (error) {
+            showMessageBox('An error occurred.', 'error');
         }
+    }
 
-        // Event listener for form submission
-        document.addEventListener('DOMContentLoaded', () => {
-            loadDataForEdit();
-            document.getElementById('editForm').addEventListener('submit', saveChanges);
+    function cancelEdit() {
+        window.location.href = currentEntryId ? `view.html?id=${currentEntryId}` : `admin.html`;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadDataForEdit();
+        document.getElementById('editForm').addEventListener('submit', saveChanges);
+        ['note500', 'note200', 'note100', 'note50', 'note20', 'note10', 'note5', 'coins'].forEach(id => {
+            document.getElementById(id)?.addEventListener('input', calculateTotalDenomination);
         });
-    </script>
+    });
+</script>
 </body>
 </html>

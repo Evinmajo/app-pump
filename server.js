@@ -76,6 +76,9 @@ app.get('/master_dashboard', (req, res) => {
 app.get('/creditor-summary', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'creditor_summary.html'));
 });
+app.get('/manage-parties', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'parties.html'));
+});
 // Serve static files from the 'public' directory
 // This middleware will now only handle requests that haven't been caught by the routes above
 app.use(express.static(path.join(__dirname, 'public')));
@@ -210,6 +213,22 @@ const readingSchema = new mongoose.Schema({
 
 const Reading = mongoose.model('Reading', readingSchema);
 
+// NEW: Schema for Expense Names
+const expenseNameSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true,
+        unique: true,
+        trim: true
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    }
+});
+
+const ExpenseName = mongoose.model('ExpenseName', expenseNameSchema);
+
 // NEW: Schema for Oil Stock (Inventory master list)
 const oilStockSchema = new mongoose.Schema({
     type: {
@@ -291,6 +310,65 @@ priceSchema.statics.getPrices = async function() {
 };
 
 const Price = mongoose.model('Price', priceSchema);
+
+// --- API Endpoints for Expense Names ---
+
+app.get('/api/parties', async (req, res) => {
+    try {
+        const parties = await Party.find().sort({ name: 1 });
+        res.json(parties);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/parties', async (req, res) => {
+    try {
+        const newParty = new Party(req.body);
+        await newParty.save();
+        res.status(201).json(newParty);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+app.delete('/api/parties/:id', async (req, res) => {
+    try {
+        await Party.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Deleted' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// --- Expense Routes ---
+app.get('/api/expenses', async (req, res) => {
+    try {
+        const expenses = await ExpenseName.find().sort({ name: 1 });
+        res.json(expenses);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/expenses', async (req, res) => {
+    try {
+        const newExpense = new ExpenseName(req.body);
+        await newExpense.save();
+        res.status(201).json(newExpense);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+app.delete('/api/expenses/:id', async (req, res) => {
+    try {
+        await ExpenseName.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Deleted' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 
 
 // --- API Endpoints for User Authentication ---
@@ -900,18 +978,43 @@ app.get('/api/transactions/creditDebit', async (req, res) => {
 app.put('/api/reading/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const updatedReading = await Reading.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
+        const newData = req.body;
 
-        if (!updatedReading) {
+        // 1. Get the current entry from the database before it is updated
+        const oldEntry = await Reading.findById(id);
+        if (!oldEntry) {
             return res.status(404).json({ message: 'Reading not found' });
         }
+
+        // 2. REVERT: Add the old quantities back into the OilStock
+        if (oldEntry.packedOilEntries && oldEntry.packedOilEntries.length > 0) {
+            for (const item of oldEntry.packedOilEntries) {
+                await OilStock.findOneAndUpdate(
+                    { type: item.name },
+                    { $inc: { quantity: item.amount } }
+                );
+            }
+        }
+
+        // 3. APPLY: Subtract the new quantities from the OilStock
+        if (newData.packedOilEntries && newData.packedOilEntries.length > 0) {
+            for (const item of newData.packedOilEntries) {
+                await OilStock.findOneAndUpdate(
+                    { type: item.name },
+                    { $inc: { quantity: -item.amount } }
+                );
+            }
+        }
+
+        // 4. Update the reading document with the new data
+        const updatedReading = await Reading.findByIdAndUpdate(id, newData, { 
+            new: true, 
+            runValidators: true 
+        });
 
         res.status(200).json(updatedReading);
     } catch (error) {
         console.error('Error updating reading:', error);
-        if (error.code === 11000) {
-            return res.status(409).json({ message: 'A reading with this ID already exists. Please use a different ID for update.', error: error.message });
-        }
         res.status(500).json({ message: 'Error updating reading', error: error.message });
     }
 });
