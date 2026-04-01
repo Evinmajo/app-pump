@@ -345,13 +345,26 @@
 
             <hr class="my-8 border-t border-gray-300">
 
-            <div class="grid grid-cols-1 mt-8">
+            <!-- <div class="grid grid-cols-1 mt-8">
                 <div class="col-span-1">
                     <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Expense Entries</h2>
                     <div id="expenseEntriesContainer" class="space-y-3">
                         </div>
                     <div class="mt-4 flex space-x-2">
                         <button type="button" onclick="addExpenseEntry()" class="px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-bold">Add Expense</button>
+                    </div>
+                </div>
+            </div> -->
+
+            <div class="grid grid-cols-1 mt-8">
+                <div class="col-span-1">
+                    <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Expense Entries</h2>
+                    <div id="expenseEntriesContainer" class="space-y-3">
+                        </div>
+                    <div class="mt-4 flex space-x-2">
+                        <input type="text" id="newExpenseName" class="w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm" placeholder="Expense Name">
+                        <input type="number" id="newExpenseAmount" class="w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm" placeholder="Amount" step="0.01">
+                        <button type="button" onclick="addExpenseEntry()" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">Add</button>
                     </div>
                 </div>
             </div>
@@ -531,25 +544,52 @@
 
 function addExpenseEntry(name = '', amount = '') {
     const container = document.getElementById('expenseEntriesContainer');
+    const nameInput = document.getElementById('newExpenseName');
+    const amountInput = document.getElementById('newExpenseAmount');
+
+    if (name === '' && amount === '') {
+        name = nameInput.value;
+        amount = amountInput.value;
+        nameInput.value = '';
+        amountInput.value = '';
+    }
+
+    if (name.trim() === '' || amount === '') {
+        showMessageBox('Expense name and amount cannot be empty.', 'error');
+        return;
+    }
 
     const entryDiv = document.createElement('div');
     entryDiv.className = 'flex items-center gap-x-2 mb-3 expense-row';
-
-    // Placeholder option is selected if name is empty
-    let optionsHtml = `<option value="" disabled ${name === '' ? 'selected' : ''}>Select Expense</option>`;
-    availableExpenses.forEach(e => {
-        optionsHtml += `<option value="${e.name}" ${e.name === name ? 'selected' : ''}>${e.name}</option>`;
-    });
-
     entryDiv.innerHTML = `
-        <select class="w-2/3 p-3 border border-gray-300 rounded-lg expense-name">
-            ${optionsHtml}
-        </select>
-        <input type="number" value="${amount}" class="w-1/3 p-3 border border-gray-300 rounded-lg expense-amount" placeholder="Amount" step="0.01">
-        <button type="button" onclick="this.parentElement.remove()" class="ml-2 px-3 py-2 bg-red-500 text-white rounded-md font-bold">X</button>
+        <input type="text" value="${name}" class="w-2/3 p-3 border border-gray-300 rounded-lg expense-name" placeholder="Expense Name">
+        <input type="number" value="${amount}" class="w-1/3 p-3 border border-gray-300 rounded-lg expense-amount" placeholder="Amount">
+        <button type="button" onclick="this.parentElement.remove()" class="ml-2 px-3 py-2 bg-red-500 text-white rounded-md">X</button>
     `;
     container.appendChild(entryDiv);
 }
+
+// function addExpenseEntry(name = '', amount = '') {
+//     const container = document.getElementById('expenseEntriesContainer');
+
+//     const entryDiv = document.createElement('div');
+//     entryDiv.className = 'flex items-center gap-x-2 mb-3 expense-row';
+
+//     // Placeholder option is selected if name is empty
+//     let optionsHtml = `<option value="" disabled ${name === '' ? 'selected' : ''}>Select Expense</option>`;
+//     availableExpenses.forEach(e => {
+//         optionsHtml += `<option value="${e.name}" ${e.name === name ? 'selected' : ''}>${e.name}</option>`;
+//     });
+
+//     entryDiv.innerHTML = `
+//         <select class="w-2/3 p-3 border border-gray-300 rounded-lg expense-name">
+//             ${optionsHtml}
+//         </select>
+//         <input type="number" value="${amount}" class="w-1/3 p-3 border border-gray-300 rounded-lg expense-amount" placeholder="Amount" step="0.01">
+//         <button type="button" onclick="this.parentElement.remove()" class="ml-2 px-3 py-2 bg-red-500 text-white rounded-md font-bold">X</button>
+//     `;
+//     container.appendChild(entryDiv);
+// }
     // --- Load Data For Edit ---
     async function loadDataForEdit() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -618,10 +658,17 @@ function addExpenseEntry(name = '', amount = '') {
                             document.getElementById('creditEntriesContainer').innerHTML = '';
                             fetchedData.creditEntries.forEach(e => addDynamicEntry('credit', e.name, e.amount));
                         }
-                        if (fetchedData.expenseEntries) {
-                            document.getElementById('expenseEntriesContainer').innerHTML = '';
-                            fetchedData.expenseEntries.forEach(e => addExpenseEntry(e.name, e.amount));
-                        }
+                        // if (fetchedData.expenseEntries) {
+                        //     document.getElementById('expenseEntriesContainer').innerHTML = '';
+                        //     fetchedData.expenseEntries.forEach(e => addExpenseEntry(e.name, e.amount));
+                        // }
+                        if (fetchedData.expenseEntries && Array.isArray(fetchedData.expenseEntries)) {
+                                const container = document.getElementById('expenseEntriesContainer');
+                                container.innerHTML = ''; // Clear existing
+                                fetchedData.expenseEntries.forEach(entry => {
+                                    addExpenseEntry(entry.name, entry.amount);
+                                });
+                            }
                         if (fetchedData.debitEntries) {
                             document.getElementById('debitEntriesContainer').innerHTML = '';
                             fetchedData.debitEntries.forEach(e => addDynamicEntry('debit', e.name, e.amount));
@@ -682,10 +729,19 @@ function addExpenseEntry(name = '', amount = '') {
             amount: parseFloat(document.querySelectorAll('#creditEntriesContainer .dynamic-entry-amount')[idx].value) || 0
         }));
 
-        data.expenseEntries = Array.from(document.querySelectorAll('.expense-row select')).map((sel, idx) => ({
-            name: sel.value,
-            amount: parseFloat(document.querySelectorAll('.expense-amount')[idx].value) || 0
-        }));
+        // data.expenseEntries = Array.from(document.querySelectorAll('.expense-row select')).map((sel, idx) => ({
+        //     name: sel.value,
+        //     amount: parseFloat(document.querySelectorAll('.expense-amount')[idx].value) || 0
+        // }));
+
+        data.expenseEntries = [];
+            document.querySelectorAll('.expense-row').forEach(row => {
+                const name = row.querySelector('.expense-name').value;
+                const amount = parseFloat(row.querySelector('.expense-amount').value) || 0;
+                if (name.trim() !== "") {
+                    data.expenseEntries.push({ name, amount });
+                }
+            });
 
         data.debitEntries = Array.from(document.querySelectorAll('#debitEntriesContainer select')).map((sel, idx) => ({
             name: sel.value,

@@ -4,91 +4,120 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Creditor Balance Summary</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <script src="./style.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Roboto', sans-serif; background-color: #eef2f7; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 800px; }
-        h1 { text-align: center; color: #2c3e50; }
-        .search-box { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background-color: #f8f9fa; color: #555; }
-        .balance-cell { font-weight: bold; }
-        .positive { color: #dc3545; } /* They owe you money (Pending Credit) */
-        .negative { color: #28a745; } /* You owe them money */
-        .total-footer { margin-top: 20px; padding: 15px; background: #2c3e50; color: white; border-radius: 8px; text-align: right; font-size: 1.1em; }
+        body { font-family: 'Inter', sans-serif; }
     </style>
 </head>
-<body>
+<body class="bg-slate-50 min-h-screen p-4 md:p-8">
 
-<div class="container">
-    <h1>Creditor Balances</h1>
-    <input type="text" id="searchInput" class="search-box" placeholder="Search for a name..." onkeyup="filterTable()">
-    
-    <table id="summaryTable">
-        <thead>
-            <tr>
-                <th>Party Name</th>
-                <th>Total Credit</th>
-                <th>Total Debit</th>
-                <th>Pending Balance</th>
-            </tr>
-        </thead>
-        <tbody id="tableBody">
-            </tbody>
-    </table>
+    <div class="max-w-4xl mx-auto">
+        <header class="mb-8 text-center md:text-left">
+            <h1 class="text-3xl font-bold text-slate-800">Creditor Balances</h1>
+            <p class="text-slate-500 mt-2">Manage and track your pending credit amounts</p>
+        </header>
 
-    <div class="total-footer" id="totalFooter">
-        Overall Pending: ₹0.00
-    </div>
-</div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6">
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </span>
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    class="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none" 
+                    placeholder="Search for a party name..."
+                    onkeyup="filterTable()"
+                >
+            </div>
+        </div>
 
-<script>
-    let allData = [];
-
-    async function loadSummary() {
-        try {
-            const response = await fetch('/api/reports/creditor-summary');
-            allData = await response.json();
-            renderTable(allData);
-        } catch (error) {
-            console.error("Error:", error);
-        }
-    }
-
-    function renderTable(data) {
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = '';
-        let grandTotal = 0;
-
-        data.forEach(item => {
-            const balance = parseFloat(item.pendingBalance);
-            grandTotal += balance;
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200">
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-600 uppercase tracking-wider">Party Name</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-600 uppercase tracking-wider text-right">Total Credit</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-600 uppercase tracking-wider text-right">Total Credit Return</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-600 uppercase tracking-wider text-right">Pending Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-slate-100">
+                        </tbody>
+                </table>
+            </div>
             
-            const row = `
-                <tr>
-                    <td><strong>${item.name}</strong></td>
-                    <td>₹${item.totalCredits}</td>
-                    <td>₹${item.totalDebits}</td>
-                    <td class="balance-cell ${balance > 0 ? 'positive' : 'negative'}">
-                        ₹${item.pendingBalance}
-                    </td>
-                </tr>
-            `;
-            tbody.innerHTML += row;
-        });
+            <div id="totalFooter" class="bg-slate-800 px-6 py-5 text-white flex justify-between items-center">
+                <span class="font-medium text-slate-300">Total Pending Credit</span>
+                <span id="grandTotal" class="text-xl font-bold">₹0.00</span>
+            </div>
+        </div>
+    </div>
 
-        document.getElementById('totalFooter').innerText = `Overall Pending Credit: ₹${grandTotal.toFixed(2)}`;
-    }
+    <script>
+        let allData = [];
 
-    function filterTable() {
-        const term = document.getElementById('searchInput').value.toLowerCase();
-        const filtered = allData.filter(item => item.name.toLowerCase().includes(term));
-        renderTable(filtered);
-    }
+        async function loadSummary() {
+            try {
+                // For demo purposes: if API fails, you can test with mock data
+                const response = await fetch('/api/reports/creditor-summary');
+                allData = await response.json();
+                renderTable(allData);
+            } catch (error) {
+                console.error("Fetch error:", error);
+                // Placeholder if no API is available
+                allData = [
+                    { name: "Acme Corp", totalCredits: "5000.00", totalDebits: "2000.00", pendingBalance: "3000.00" },
+                    { name: "Global Logistics", totalCredits: "1000.00", totalDebits: "4500.00", pendingBalance: "-3500.00" }
+                ];
+                renderTable(allData);
+            }
+        }
 
-    document.addEventListener('DOMContentLoaded', loadSummary);
-</script>
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            const totalDisplay = document.getElementById('grandTotal');
+            tbody.innerHTML = '';
+            let grandTotal = 0;
+
+            data.forEach(item => {
+                const balance = parseFloat(item.pendingBalance);
+                grandTotal += balance;
+                
+                const balanceClass = balance > 0 ? 'text-red-600 bg-red-50' : 'text-emerald-600 bg-emerald-50';
+                
+                const row = `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="font-semibold text-slate-700">${item.name}</div>
+                        </td>
+                        <td class="px-6 py-4 text-right text-slate-600">₹${item.totalCredits}</td>
+                        <td class="px-6 py-4 text-right text-slate-600">₹${item.totalDebits}</td>
+                        <td class="px-6 py-4 text-right">
+                            <span class="inline-block px-3 py-1 rounded-full text-sm font-bold ${balanceClass}">
+                                ₹${item.pendingBalance}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+
+            totalDisplay.innerText = `₹${grandTotal.toFixed(2)}`;
+        }
+
+        function filterTable() {
+            const term = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allData.filter(item => item.name.toLowerCase().includes(term));
+            renderTable(filtered);
+        }
+
+        document.addEventListener('DOMContentLoaded', loadSummary);
+    </script>
 
 </body>
 </html>

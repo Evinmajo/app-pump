@@ -45,6 +45,16 @@
     <span>📥</span> Save as PDF
     </button>
 </div>
+<div id="latestReadingsContainer" class="mb-6 p-4 bg-white border-2 border-blue-100 rounded-xl shadow-sm">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+            <span class="p-1 bg-blue-100 rounded text-blue-600">⛽</span> 
+            Current Nozzle Status (Last Submitted)
+        </h2>
+        <div id="lastSyncTime" class="text-[10px] text-gray-400 font-mono italic"></div>
+    </div>
+    <div id="lastReadingsGrid" class="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-8 gap-2"></div>
+</div>
 
         <div id="tablesWrapper"></div>
         <div id="noDataMessage" class="hidden text-center py-20 text-gray-500 text-xl font-medium">
@@ -64,11 +74,57 @@
 
                 const response = await fetch('/api/readings');
                 allReadings = await response.json();
+                displayLastSubmittedReadings(allReadings);
                 renderShiftWiseTables(allReadings);
             } catch (error) {
                 console.error('Fetch error:', error);
             }
         }
+
+function displayLastSubmittedReadings(data) {
+    const grid = document.getElementById('lastReadingsGrid');
+    const syncTime = document.getElementById('lastSyncTime');
+
+    if (!data || data.length === 0) {
+        grid.innerHTML = '<p class="col-span-full text-center text-gray-400 text-xs">No data for selected range</p>';
+        syncTime.innerText = "";
+        return;
+    }
+
+    const nozzleDefinitions = [
+        { label: "MS-1", key: "secondReading1" }, { label: "MS-2", key: "secondReading2" },
+        { label: "MS-3", key: "secondReading3" }, { label: "MS-4", key: "secondReading4" },
+        { label: "MS-5", key: "secondReading5" }, { label: "MS-6", key: "secondReading6" },
+        { label: "HSD-1", key: "dieselSecondReading1" }, { label: "HSD-2", key: "dieselSecondReading2" },
+        { label: "HSD-3", key: "dieselSecondReading3" }, { label: "HSD-4", key: "dieselSecondReading4" },
+        { label: "HSD-5", key: "dieselSecondReading5" }, { label: "HSD-6", key: "dieselSecondReading6" },
+        { label: "3A", key: "speedSecondReading1" }, { label: "4A", key: "speedSecondReading2" },
+        { label: "5A", key: "speedSecondReading3" }
+    ];
+
+    // Find the highest value across ALL entries (Shifts 1, 2, & 3) in the current list
+    const finalNozzles = nozzleDefinitions.map(nozzle => {
+        const highestVal = data.reduce((max, entry) => {
+            const val = Number(entry[nozzle.key]) || 0;
+            return val > max ? val : max;
+        }, 0);
+
+        return { label: nozzle.label, val: highestVal };
+    });
+
+    // UI Feedback: Show which date the system found as the "most recent" in the set
+    const latestDateFound = data.reduce((latest, curr) => 
+        (curr.currentDate > latest ? curr.currentDate : latest), data[0].currentDate);
+
+    syncTime.innerText = `Max Readings Found up to: ${latestDateFound}`;
+
+    grid.innerHTML = finalNozzles.map(n => `
+        <div class="bg-blue-50 border border-blue-100 rounded p-2 text-center shadow-sm">
+            <p class="text-[9px] font-bold text-blue-500 uppercase tracking-tighter">${n.label}</p>
+            <p class="text-xs font-black text-gray-800">${n.val.toLocaleString('en-IN')}</p>
+        </div>
+    `).join('');
+}        
 
         function renderShiftWiseTables(data) {
             const wrapper = document.getElementById('tablesWrapper');
@@ -386,7 +442,8 @@
         
         return true;
     });
-
+    
+    displayLastSubmittedReadings(filtered);
     renderShiftWiseTables(filtered);
     
     // Toggle the "No Data" message based on results
