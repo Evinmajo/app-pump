@@ -46,14 +46,25 @@
     </button>
 </div>
 <div id="latestReadingsContainer" class="mb-6 p-4 bg-white border-2 border-blue-100 rounded-xl shadow-sm">
-    <div class="flex justify-between items-center mb-4">
+    <div class="flex justify-between items-center mb-4 border-b pb-2">
         <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
             <span class="p-1 bg-blue-100 rounded text-blue-600">⛽</span> 
-            Current Nozzle Status (Last Submitted)
+            Daily Meter Overview
         </h2>
         <div id="lastSyncTime" class="text-[10px] text-gray-400 font-mono italic"></div>
     </div>
-    <div id="lastReadingsGrid" class="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-8 gap-2"></div>
+
+    <div class="mb-4">
+        <h3 class="text-xs font-bold text-orange-600 uppercase mb-2 ml-1">🌅 Opening Readings (Day Start)</h3>
+        <div id="openingReadingsGrid" class="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-8 gap-2"></div>
+    </div>
+
+    <hr class="my-4 border-blue-50">
+
+    <div>
+        <h3 class="text-xs font-bold text-blue-600 uppercase mb-2 ml-1">🌙 Last Submitted Readings (Current)</h3>
+        <div id="lastReadingsGrid" class="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-8 gap-2"></div>
+    </div>
 </div>
 
         <div id="tablesWrapper"></div>
@@ -82,49 +93,92 @@
         }
 
 function displayLastSubmittedReadings(data) {
-    const grid = document.getElementById('lastReadingsGrid');
+    const openingGrid = document.getElementById('openingReadingsGrid');
+    const lastGrid = document.getElementById('lastReadingsGrid');
     const syncTime = document.getElementById('lastSyncTime');
 
     if (!data || data.length === 0) {
-        grid.innerHTML = '<p class="col-span-full text-center text-gray-400 text-xs">No data for selected range</p>';
+        const noDataHtml = '<p class="col-span-full text-center text-gray-400 text-xs py-4">No data available for this range</p>';
+        openingGrid.innerHTML = noDataHtml;
+        lastGrid.innerHTML = noDataHtml;
         syncTime.innerText = "";
         return;
     }
 
     const nozzleDefinitions = [
-        { label: "MS-1", key: "secondReading1" }, { label: "MS-2", key: "secondReading2" },
-        { label: "MS-3", key: "secondReading3" }, { label: "MS-4", key: "secondReading4" },
-        { label: "MS-5", key: "secondReading5" }, { label: "MS-6", key: "secondReading6" },
-        { label: "HSD-1", key: "dieselSecondReading1" }, { label: "HSD-2", key: "dieselSecondReading2" },
-        { label: "HSD-3", key: "dieselSecondReading3" }, { label: "HSD-4", key: "dieselSecondReading4" },
-        { label: "HSD-5", key: "dieselSecondReading5" }, { label: "HSD-6", key: "dieselSecondReading6" },
-        { label: "3A", key: "speedSecondReading1" }, { label: "4A", key: "speedSecondReading2" },
-        { label: "5A", key: "speedSecondReading3" }
+        { label: "MS-1", openKey: "firstReading1", closeKey: "secondReading1" },
+        { label: "MS-2", openKey: "firstReading2", closeKey: "secondReading2" },
+        { label: "MS-3", openKey: "firstReading3", closeKey: "secondReading3" },
+        { label: "MS-4", openKey: "firstReading4", closeKey: "secondReading4" },
+        { label: "MS-5", openKey: "firstReading5", closeKey: "secondReading5" },
+        { label: "MS-6", openKey: "firstReading6", closeKey: "secondReading6" },
+        { label: "HSD-1", openKey: "dieselFirstReading1", closeKey: "dieselSecondReading1" },
+        { label: "HSD-2", openKey: "dieselFirstReading2", closeKey: "dieselSecondReading2" },
+        { label: "HSD-3", openKey: "dieselFirstReading3", closeKey: "dieselSecondReading3" },
+        { label: "HSD-4", openKey: "dieselFirstReading4", closeKey: "dieselSecondReading4" },
+        { label: "HSD-5", openKey: "dieselFirstReading5", closeKey: "dieselSecondReading5" },
+        { label: "HSD-6", openKey: "dieselFirstReading6", closeKey: "dieselSecondReading6" },
+        { label: "3A (SPD)", openKey: "speedFirstReading1", closeKey: "speedSecondReading1" },
+        { label: "4A (SPD)", openKey: "speedFirstReading2", closeKey: "speedSecondReading2" },
+        { label: "5A (SPD)", openKey: "speedFirstReading3", closeKey: "speedSecondReading3" }
     ];
 
-    // Find the highest value across ALL entries (Shifts 1, 2, & 3) in the current list
-    const finalNozzles = nozzleDefinitions.map(nozzle => {
-        const highestVal = data.reduce((max, entry) => {
-            const val = Number(entry[nozzle.key]) || 0;
+    const processedData = nozzleDefinitions.map(nozzle => {
+        // Find absolute lowest opening reading in the filtered data
+        const openVal = data.reduce((min, entry) => {
+            const val = Number(entry[nozzle.openKey]) || Infinity;
+            return val < min ? val : min;
+        }, Infinity);
+
+        // Find absolute highest closing reading in the filtered data
+        const closeVal = data.reduce((max, entry) => {
+            const val = Number(entry[nozzle.closeKey]) || 0;
             return val > max ? val : max;
         }, 0);
 
-        return { label: nozzle.label, val: highestVal };
+        const opening = openVal === Infinity ? 0 : openVal;
+        const closing = closeVal;
+        
+        // Calculate Sales (Difference)
+        // Includes basic rollover protection (if meter resets, sales defaults to 0 or manual check)
+        const sales = closing >= opening ? (closing - opening) : 0;
+
+        return { label: nozzle.label, opening, closing, sales };
     });
 
-    // UI Feedback: Show which date the system found as the "most recent" in the set
     const latestDateFound = data.reduce((latest, curr) => 
         (curr.currentDate > latest ? curr.currentDate : latest), data[0].currentDate);
 
-    syncTime.innerText = `Max Readings Found up to: ${latestDateFound}`;
+    syncTime.innerText = `Report generated up to: ${latestDateFound}`;
 
-    grid.innerHTML = finalNozzles.map(n => `
-        <div class="bg-blue-50 border border-blue-100 rounded p-2 text-center shadow-sm">
-            <p class="text-[9px] font-bold text-blue-500 uppercase tracking-tighter">${n.label}</p>
-            <p class="text-xs font-black text-gray-800">${n.val.toLocaleString('en-IN')}</p>
+    // Render Opening Grid
+    openingGrid.innerHTML = processedData.map(n => `
+        <div class="bg-orange-50 border border-orange-100 rounded p-2 text-center shadow-sm">
+            <p class="text-[9px] font-bold text-orange-500 uppercase tracking-tighter">${n.label}</p>
+            <p class="text-xs font-black text-gray-800">${n.opening.toLocaleString('en-IN')}</p>
         </div>
     `).join('');
-}        
+
+    // Render Last Readings Grid + Calculated Sales
+    lastGrid.innerHTML = processedData.map(n => `
+        <div class="bg-blue-50 border border-blue-100 rounded p-2 text-center shadow-sm flex flex-col justify-between">
+            <p class="text-[9px] font-bold text-blue-500 uppercase tracking-tighter mb-1 border-b border-blue-100 pb-1">
+                ${n.label}
+            </p>
+            <div class="space-y-1">
+                <p class="text-[10px] font-black text-gray-700" title="Last Reading">
+                    ${n.closing.toLocaleString('en-IN')}
+                </p>
+                <div class="bg-green-100 rounded py-0.5 px-1 border border-green-200">
+                    <p class="text-[7px] font-bold text-green-600 uppercase leading-none">Sales (Ltrs)</p>
+                    <p class="text-[11px] font-black text-green-800 leading-tight">
+                        ${n.sales.toFixed(2)}
+                    </p>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
 
         function renderShiftWiseTables(data) {
             const wrapper = document.getElementById('tablesWrapper');

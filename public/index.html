@@ -564,123 +564,164 @@ document.querySelectorAll('.denom-input').forEach(input => {
             fetchExpenses();
         });
 
-        async function saveAndNavigate() {
-            const submitButton = document.querySelector('button[onclick="saveAndNavigate()"]');
-            const shift = document.getElementById('shift').value;
+      async function saveAndNavigate() {
+    // Select the button to manage UI state
+    const submitButton = document.querySelector('button[onclick="saveAndNavigate()"]');
+    const shiftEl = document.getElementById('shift');
+    const shift = shiftEl ? shiftEl.value : '';
 
-            if (!shift) {
-                showMessageBox('Enter which shift.', 'error');
-                return; 
-            }
-            
-            const isNozzleValid = (secondId, firstId, label) => {
-                const first = parseFloat(document.getElementById(firstId).value) || 0;
-                const second = parseFloat(document.getElementById(secondId).value) || 0;
-                let diff;
-                if (second >= first) {
-                    diff = second - first;
-                } else {
-                    // Handle rollover for a 15-digit meter (999,999,999,999,999)
-                    // 10^15 is 1,000,000,000,000,000
-                    const maxValue = 1000000000000000; 
-                    diff = (maxValue - first) + second;
-                }
-                if (diff < 0 || diff > 2000) {
-                    showMessageBox(`${label} difference must be between 0 and 2000.`, 'error');
-                    return false;
-                }
-                return true;
-            };
+    /** * 1. Nozzle Validation Logic 
+     * Checks for meter rollovers and ensures valid differences.
+     */
+    const isNozzleValid = (secondId, firstId, label) => {
+        const firstEl = document.getElementById(firstId);
+        const secondEl = document.getElementById(secondId);
+        
+        // If the nozzle fields don't exist in HTML, skip validation for them
+        if (!firstEl || !secondEl) return true;
 
-            if (!isNozzleValid('secondReading1', 'firstReading1', "Petrol Nozzle 1")) return;
-            if (!isNozzleValid('secondReading2', 'firstReading2', "Petrol Nozzle 2")) return;
-            if (!isNozzleValid('secondReading3', 'firstReading3', "Petrol Nozzle 3")) return;
-            
-            // Add these lines inside saveAndNavigate(
-            if (!isNozzleValid('secondReading4', 'firstReading4', "Petrol Nozzle 4")) return;
-            if (!isNozzleValid('secondReading5', 'firstReading5', "Petrol Nozzle 5")) return;
-            if (!isNozzleValid('secondReading6', 'firstReading6', "Petrol Nozzle 6")) return;
-            if (!isNozzleValid('speedSecondReading1', 'speedFirstReading1', "Speed Nozzle 7")) return;
-            if (!isNozzleValid('speedSecondReading2', 'speedFirstReading2', "Speed Nozzle 8")) return;
-            if (!isNozzleValid('speedSecondReading3', 'speedFirstReading3', "Speed Nozzle 9")) return;
-            
-            if (!isNozzleValid('dieselSecondReading4', 'dieselFirstReading4', "Diesel Nozzle 4")) return;
-            if (!isNozzleValid('dieselSecondReading5', 'dieselFirstReading5', "Diesel Nozzle 5")) return;
-            if (!isNozzleValid('dieselSecondReading6', 'dieselFirstReading6', "Diesel Nozzle 6")) return;            
-            if (!isNozzleValid('dieselSecondReading1', 'dieselFirstReading1', "Diesel Nozzle 1")) return;
-            if (!isNozzleValid('dieselSecondReading2', 'dieselFirstReading2', "Diesel Nozzle 2")) return;
-            if (!isNozzleValid('dieselSecondReading3', 'dieselFirstReading3', "Diesel Nozzle 3")) return;
+        const first = parseFloat(firstEl.value) || 0;
+        const second = parseFloat(secondEl.value) || 0;
+        let diff;
 
-            if (submitButton) { submitButton.disabled = true; submitButton.textContent = 'Submitting...'; }
-
-            const data = {};
-            const inputs = document.querySelectorAll('input[type="number"], input[type="date"]');
-            inputs.forEach(input => { 
-                if(input.id) { // Only add to data if the input has an ID
-                    data[input.id] = input.value; 
-                }
-            });
-            data['totalAmount'] = parseFloat(document.getElementById('totalAmount').value) || 0;
-            data['selectedId'] = document.getElementById('selectedId').value;
-            data['shift'] = shift;
-            data['petrol'] = parseFloat(document.getElementById('petrol').value) || 0;
-            data['diesel'] = parseFloat(document.getElementById('diesel').value) || 0;
-            data['oil'] = parseFloat(document.getElementById('oil').value) || 0;
-            data['speed'] = parseFloat(document.getElementById('speed').value) || 0;
-
-
-            const packedOilEntries = [];
-            document.querySelectorAll('#packedOilEntriesContainer > div').forEach(div => {
-                const name = div.querySelector('.packed-oil-name')?.value;
-                const amount = parseFloat(div.querySelector('.packed-oil-quantity')?.value) || 0;
-                const price = parseFloat(div.querySelector('.packed-oil-amount')?.value) || 0;
-                if (name && (amount > 0 || price > 0)) packedOilEntries.push({ name, amount, price });
-            });
-            data.packedOilEntries = packedOilEntries;
-
-            const getEntries = (selector) => {
-                const entries = [];
-                document.querySelectorAll(selector).forEach(div => {
-                    const name = div.querySelector('.dynamic-entry-name')?.value;
-                    const amount = parseFloat(div.querySelector('.dynamic-entry-amount')?.value) || 0;
-                    if (name) entries.push({ name, amount });
-                });
-                return entries;
-            };
-
-            data['creditEntries'] = getEntries('#creditEntriesContainer .flex');
-            data['debitEntries'] = getEntries('#debitEntriesContainer .flex');
-            data['expenseEntries'] = getEntries('#expenseEntriesContainer .flex');
-
-            for (const key in data) {
-                if (key !== 'currentDate' && key !== 'selectedId' && !Array.isArray(data[key])) {
-                    data[key] = parseFloat(data[key]) || 0;
-                }
-            }
-
-            try {
-                const response = await fetch('/api/saveReading', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const result = await response.json(); // Wait for the full server confirmation
-
-                if (response.ok) {
-                    showMessageBox('Data saved successfully! Redirecting...', 'success');
-                    document.getElementById('packedOilEntriesContainer').innerHTML = '';
-                    setTimeout(() => {
-                        window.location.href = `/view?id=${result._id}`;
-                    }, 3000);
-                } else {
-                    showMessageBox('Failed to save data.', 'error');
-                }
-            } catch (error) {
-                showMessageBox('An error occurred.', 'error');
-            } finally {
-                if (submitButton) { submitButton.disabled = false; submitButton.textContent = 'Submit'; }
-            }
+        if (second >= first) {
+            diff = second - first;
+        } else {
+            // Handle rollover for a 15-digit meter (999,999,999,999,999)
+            const maxValue = 1000000000000000; 
+            diff = (maxValue - first) + second;
         }
+
+        if (diff < 0 || diff > 2000) {
+            showMessageBox(`${label} difference must be between 0 and 2000.`, 'error');
+            return false;
+        }
+        return true;
+    };
+
+    // 2. Pre-Submission Validations
+    if (!shift) {
+        showMessageBox('Please select a shift before submitting.', 'error');
+        return; 
+    }
+
+    // Validate Nozzles (Checks Petrol 1-6, Diesel 1-6, Speed 1-3)
+    for (let i = 1; i <= 6; i++) {
+        if (!isNozzleValid(`secondReading${i}`, `firstReading${i}`, `Petrol Nozzle ${i}`)) return;
+        if (!isNozzleValid(`dieselSecondReading${i}`, `dieselFirstReading${i}`, `Diesel Nozzle ${i}`)) return;
+    }
+    for (let i = 1; i <= 3; i++) {
+        if (!isNozzleValid(`speedSecondReading${i}`, `speedFirstReading${i}`, `Speed Nozzle ${i}`)) return;
+    }
+
+    // 3. UI Feedback - Disable button to prevent duplicate clicks
+    if (submitButton) { 
+        submitButton.disabled = true; 
+        submitButton.textContent = 'Synchronizing with Server...'; 
+    }
+
+    // 4. Data Aggregation
+    const data = {
+        currentDate: document.getElementById('currentDate')?.value || '',
+        selectedId: document.getElementById('selectedId')?.value || '',
+        shift: shift,
+        petrol: parseFloat(document.getElementById('petrol')?.value) || 0,
+        diesel: parseFloat(document.getElementById('diesel')?.value) || 0,
+        oil: parseFloat(document.getElementById('oil')?.value) || 0,
+        speed: parseFloat(document.getElementById('speed')?.value) || 0,
+        totalAmount: parseFloat(document.getElementById('totalAmount')?.value) || 0,
+        oilFirstReading: parseFloat(document.getElementById('oilFirstReading')?.value) || 0,
+        oilSecondReading: parseFloat(document.getElementById('oilSecondReading')?.value) || 0,
+        
+        // Quantities tested (Testing/Calibration)
+        speedTestQuantity: parseFloat(document.getElementById('speedTestQuantity')?.value) || 0,
+        petrolTestQuantity: parseFloat(document.getElementById('petrolTestQuantity')?.value) || 0,
+        dieselTestQuantity: parseFloat(document.getElementById('dieselTestQuantity')?.value) || 0,
+        
+        // Final Denomination Total
+        totalDenomination: parseFloat(document.getElementById('totalDenomination')?.value) || 0
+    };
+
+    // SAFE Collection for Individual Denominations (Prevents Null Error)
+    const notes = ['note500', 'note200', 'note100', 'note50', 'note20', 'note10', 'note5', 'coins'];
+    notes.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) data[id] = parseFloat(el.value) || 0;
+    });
+
+    // Automatically capture all numbered nozzle readings (1-6)
+    const nozzlePrefixes = ['firstReading', 'secondReading', 'dieselFirstReading', 'dieselSecondReading', 'speedFirstReading', 'speedSecondReading'];
+    nozzlePrefixes.forEach(prefix => {
+        for (let i = 1; i <= 6; i++) {
+            const el = document.getElementById(`${prefix}${i}`);
+            if (el) data[`${prefix}${i}`] = parseFloat(el.value) || 0;
+        }
+    });
+
+    /**
+     * Helper to grab entries from dynamic containers (Credit, Debit, Expenses, Packed Oil)
+     */
+    const getEntries = (containerId) => {
+        const entries = [];
+        const container = document.getElementById(containerId);
+        if (!container) return entries;
+
+        container.querySelectorAll(':scope > div').forEach(div => {
+            const name = div.querySelector('.dynamic-entry-name, .packed-oil-name')?.value;
+            const amount = parseFloat(div.querySelector('.dynamic-entry-amount, .packed-oil-quantity')?.value) || 0;
+            const price = parseFloat(div.querySelector('.packed-oil-amount')?.value) || 0;
+            
+            if (name) {
+                const entry = { name, amount };
+                if (price) entry.price = price; 
+                entries.push(entry);
+            }
+        });
+        return entries;
+    };
+
+    data.packedOilEntries = getEntries('packedOilEntriesContainer');
+    data.creditEntries = getEntries('creditEntriesContainer');
+    data.debitEntries = getEntries('debitEntriesContainer');
+    data.expenseEntries = getEntries('expenseEntriesContainer');
+
+    // 5. Submit to API and wait for full confirmation
+    try {
+        const response = await fetch('/api/saveReading', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        // Parse response to ensure server is done
+        const result = await response.json();
+
+        if (response.ok) {
+            // Success only AFTER the server has confirmed storage
+            showMessageBox('Success! Data saved to server.', 'success');
+            
+            // Clear dynamic UI components
+            const packedContainer = document.getElementById('packedOilEntriesContainer');
+            if (packedContainer) packedContainer.innerHTML = '';
+            
+            // Redirect using the ID returned by the server
+            setTimeout(() => {
+                window.location.href = `/view?id=${result._id}`;
+            }, 4500);
+        } else {
+            throw new Error(result.message || 'The server rejected the data.');
+        }
+    } catch (error) {
+        console.error('Submission Error:', error);
+        showMessageBox(`Error: ${error.message}`, 'error');
+        
+        // Re-enable the button if the upload fails
+        if (submitButton) { 
+            submitButton.disabled = false; 
+            submitButton.textContent = 'Submit'; 
+        }
+    }
+}
     </script>
 </body>
 </html>
