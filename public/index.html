@@ -620,6 +620,16 @@ document.querySelectorAll('.denom-input').forEach(input => {
         submitButton.textContent = 'Synchronizing with Server...'; 
     }
 
+    const denominationTotal = 
+    (parseFloat(document.getElementById('note500')?.value || 0) * 500) +
+    (parseFloat(document.getElementById('note200')?.value || 0) * 200) +
+    (parseFloat(document.getElementById('note100')?.value || 0) * 100) +
+    (parseFloat(document.getElementById('note50')?.value || 0) * 50) +
+    (parseFloat(document.getElementById('note20')?.value || 0) * 20) +
+    (parseFloat(document.getElementById('note10')?.value || 0) * 10) +
+    (parseFloat(document.getElementById('note5')?.value || 0) * 5) +
+    (parseFloat(document.getElementById('coins')?.value || 0) * 1);
+
     // 4. Data Aggregation
     const data = {
         currentDate: document.getElementById('currentDate')?.value || '',
@@ -639,7 +649,7 @@ document.querySelectorAll('.denom-input').forEach(input => {
         dieselTestQuantity: parseFloat(document.getElementById('dieselTestQuantity')?.value) || 0,
         
         // Final Denomination Total
-        totalDenomination: parseFloat(document.getElementById('totalDenomination')?.value) || 0
+       totalDenomination: denominationTotal
     };
 
     // SAFE Collection for Individual Denominations (Prevents Null Error)

@@ -697,6 +697,16 @@ function addExpenseEntry(name = '', amount = '') {
 
     async function saveChanges(event) {
         event.preventDefault();
+        const denominationTotal = 
+        (parseFloat(document.getElementById('note500')?.value || 0) * 500) +
+        (parseFloat(document.getElementById('note200')?.value || 0) * 200) +
+        (parseFloat(document.getElementById('note100')?.value || 0) * 100) +
+        (parseFloat(document.getElementById('note50')?.value || 0) * 50) +
+        (parseFloat(document.getElementById('note20')?.value || 0) * 20) +
+        (parseFloat(document.getElementById('note10')?.value || 0) * 10) +
+        (parseFloat(document.getElementById('note5')?.value || 0) * 5) +
+        (parseFloat(document.getElementById('coins')?.value || 0) * 1);
+
         const data = {
             currentDate: document.getElementById('currentDate').value,
             selectedId: document.getElementById('selectedId').value,
@@ -753,7 +763,7 @@ function addExpenseEntry(name = '', amount = '') {
             note10: getNumberValue('note10'),
             note5: getNumberValue('note5'),
             coins: getNumberValue('coins'),
-            totalDenomination: getNumberValue('totalDenomination')
+            totalDenomination: denominationTotal
         };
 
         // Collect Dynamic Entries
