@@ -79,6 +79,9 @@ app.get('/creditor-summary', (req, res) => {
 app.get('/manage-parties', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'parties.html'));
 });
+app.get('/tank-stock', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'tank_stock.html'));
+});
 // Serve static files from the 'public' directory
 // This middleware will now only handle requests that haven't been caught by the routes above
 app.use(express.static(path.join(__dirname, 'public')));
@@ -212,6 +215,24 @@ const readingSchema = new mongoose.Schema({
 });
 
 const Reading = mongoose.model('Reading', readingSchema);
+
+const tankStockSchema = new mongoose.Schema({
+    fuelType: { type: String, required: true, unique: true }, // 'Petrol', 'Diesel', 'Speed'
+    currentLiters: { type: Number, default: 0 }
+});
+const TankStock = mongoose.model('TankStock', tankStockSchema);
+
+// Schema for Tank History (Loads & Automation Checks)
+const tankHistorySchema = new mongoose.Schema({
+    date: { type: String, required: true },
+    fuelType: { type: String, required: true },
+    type: { type: String, enum: ['Load', 'AutomationCheck'] },
+    liters: { type: Number, required: true }, // Added stock or Automation Reading
+    physicalStockAtTime: { type: Number }, // DB stock before automation check
+    loss: { type: Number, default: 0 }, 
+    timestamp: { type: Date, default: Date.now }
+});
+const TankHistory = mongoose.model('TankHistory', tankHistorySchema);
 
 // NEW: Schema for Expense Names
 const expenseNameSchema = new mongoose.Schema({
@@ -423,6 +444,91 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
+// Get Current Stock
+app.get('/api/tanks/stock', async (req, res) => {
+    const stocks = await TankStock.find();
+    res.json(stocks);
+});
+
+// Add Stock Loading
+app.post('/api/tanks/load', async (req, res) => {
+    const { fuelType, amount, date } = req.body;
+    await TankStock.findOneAndUpdate(
+        { fuelType },
+        { $inc: { currentLiters: Number(amount) } },
+        { upsert: true }
+    );
+    const history = new TankHistory({ date, fuelType, type: 'Load', liters: amount });
+    await history.save();
+    res.status(201).json({ message: 'Stock added' });
+});
+
+// Record Automation Data & Calculate Loss
+app.post('/api/tanks/check-loss', async (req, res) => {
+    const { fuelType, automationLiters, date } = req.body;
+    const stock = await TankStock.findOne({ fuelType });
+    const currentDBStock = stock ? stock.currentLiters : 0;
+    
+    // Loss = Physical DB Stock - Automation Reading
+    const loss = currentDBStock - Number(automationLiters);
+
+    const history = new TankHistory({
+        date, fuelType, type: 'AutomationCheck',
+        liters: automationLiters,
+        physicalStockAtTime: currentDBStock,
+        loss: loss
+    });
+    await history.save();
+    res.json({ loss });
+});
+
+// Get History
+app.get('/api/tanks/history', async (req, res) => {
+    const history = await TankHistory.find().sort({ timestamp: -1 });
+    res.json(history);
+});
+// Manual Stock Adjustment (Increase or Decrease)
+app.post('/api/tanks/manual-adjust', async (req, res) => {
+    try {
+        const { fuelType, amount, type, date } = req.body;
+        // If type is 'Decrease', we multiply by -1
+        const adjustment = type === 'Increase' ? Number(amount) : -Number(amount);
+
+        await TankStock.findOneAndUpdate(
+            { fuelType },
+            { $inc: { currentLiters: adjustment } },
+            { upsert: true }
+        );
+
+        const history = new TankHistory({ 
+            date, 
+            fuelType, 
+            type: 'Load', // Logged as a load event
+            liters: adjustment 
+        });
+        await history.save();
+        
+        res.status(200).json({ message: 'Stock adjusted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Adjustment failed', error: error.message });
+    }
+});
+// Add this with your other Tank API endpoints in server.js
+app.delete('/api/tanks/history/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deletedRecord = await TankHistory.findByIdAndDelete(id);
+
+        if (!deletedRecord) {
+            return res.status(404).json({ message: 'History record not found' });
+        }
+
+        res.status(200).json({ message: 'Record deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting tank history:', error);
+        res.status(500).json({ message: 'Error deleting record', error: error.message });
+    }
+});
 // --- NEW API Endpoints for Staff Management ---
 
 // API Endpoint to add a new staff member
@@ -787,55 +893,54 @@ app.post('/api/saveReading', async (req, res) => {
     try {
         const data = req.body;
 
-        // 1. Data validation before starting DB work
+        // 1. Data validation
         if (data.totalAmount !== undefined && data.totalDenomination === undefined) {
             data.totalDenomination = data.totalAmount;
         }
 
-        // 2. PRIMARY SAVE: Wait for the reading to be written to disk
+        // 2. PRIMARY SAVE
         const newReading = new Reading(req.body);
-        const savedReading = await newReading.save(); //
+        const savedReading = await newReading.save();
 
-        // 3. INVENTORY UPDATE: Using for...of with await is correct, 
-        // but we must ensure we don't skip any entries.
+        // 3. TANK STOCK MINIMIZATION (Crucial for tank_stock.html)
+        const petrolSale = (data.secondReading1 + data.secondReading2 + data.secondReading3 + data.secondReading4 + data.secondReading5 + data.secondReading6) - 
+                          (data.firstReading1 + data.firstReading2 + data.firstReading3 + data.firstReading4 + data.firstReading5 + data.firstReading6) - (data.petrolTestQuantity || 0);
+
+        const dieselSale = (data.dieselSecondReading1 + data.dieselSecondReading2 + data.dieselSecondReading3 + data.dieselSecondReading4 + data.dieselSecondReading5 + data.dieselSecondReading6) - 
+                          (data.dieselFirstReading1 + data.dieselFirstReading2 + data.dieselFirstReading3 + data.dieselFirstReading4 + data.dieselFirstReading5 + data.dieselFirstReading6) - (data.dieselTestQuantity || 0);
+
+        const speedSale = (data.speedSecondReading1 + data.speedSecondReading2 + data.speedSecondReading3) - 
+                         (data.speedFirstReading1 + data.speedFirstReading2 + data.speedFirstReading3) - (data.speedTestQuantity || 0);
+
+        await TankStock.updateOne({ fuelType: 'Petrol' }, { $inc: { currentLiters: -petrolSale } });
+        await TankStock.updateOne({ fuelType: 'Diesel' }, { $inc: { currentLiters: -dieselSale } });
+        await TankStock.updateOne({ fuelType: 'Speed' }, { $inc: { currentLiters: -speedSale } });
+
+        // 4. OIL INVENTORY UPDATE
         if (data.packedOilEntries && data.packedOilEntries.length > 0) {
             for (const entry of data.packedOilEntries) {
-                // Force the loop to wait for each stock update to finish
                 await OilStock.findOneAndUpdate(
                     { type: entry.name }, 
                     { $inc: { quantity: -entry.amount } }
-                ); //
+                );
             }
         }
 
-        // 4. AUTOMATIC UPDATE: Wait for the DefaultReading update to finish
-        // If the server crashes here, the next staff will see wrong "First Readings"
+        // 5. AUTOMATIC UPDATE (Second Reading -> Next First Reading)
         await DefaultReading.findOneAndUpdate({}, {
-            p1: req.body.secondReading1,
-            p2: req.body.secondReading2,
-            p3: req.body.secondReading3,
-            p4: req.body.secondReading4,
-            p5: req.body.secondReading5,
-            p6: req.body.secondReading6,
-            d1: req.body.dieselSecondReading1,
-            d2: req.body.dieselSecondReading2,
-            d3: req.body.dieselSecondReading3,
-            d4: req.body.dieselSecondReading4,
-            d5: req.body.dieselSecondReading5,
-            d6: req.body.dieselSecondReading6,
-            s1: req.body.speedSecondReading1,
-            s2: req.body.speedSecondReading2,
-            s3: req.body.speedSecondReading3
-        }, { upsert: true }); //
+            p1: data.secondReading1, p2: data.secondReading2, p3: data.secondReading3,
+            p4: data.secondReading4, p5: data.secondReading5, p6: data.secondReading6,
+            d1: data.dieselSecondReading1, d2: data.dieselSecondReading2, d3: data.dieselSecondReading3,
+            d4: data.dieselSecondReading4, d5: data.dieselSecondReading5, d6: data.dieselSecondReading6,
+            s1: data.speedSecondReading1, s2: data.speedSecondReading2, s3: data.speedSecondReading3
+        }, { upsert: true });
 
-        // 5. FINAL RESPONSE: Only send this once all steps 2, 3, and 4 are DONE.
-        // This tells Vercel/Render "Everything is finished, you can sleep now."
-        res.status(201).json(savedReading); //
+        // 6. FINAL RESPONSE
+        res.status(201).json(savedReading);
 
     } catch (error) {
         console.error('Error saving reading:', error);
-        // If any of the 'await' calls above fail, the code jumps here instantly
-        res.status(500).json({ message: 'Error saving reading', error: error.message }); //
+        res.status(500).json({ message: 'Error saving reading', error: error.message });
     }
 });
 
@@ -974,7 +1079,6 @@ app.get('/api/transactions/creditDebit', async (req, res) => {
     }
 });
 
-// API Endpoint to update a reading by _id (PUT request for edit.html)
 app.put('/api/reading/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -985,6 +1089,45 @@ app.put('/api/reading/:id', async (req, res) => {
         if (!oldEntry) {
             return res.status(404).json({ message: 'Reading not found' });
         }
+
+        // --- PART A: TANK STOCK SYNCHRONIZATION ---
+        
+        // Helper to calculate total liters sold for a specific fuel type
+        const getFuelSales = (data, type) => {
+            let total = 0;
+            if (type === 'speed') {
+                for (let i = 1; i <= 3; i++) {
+                    total += (Number(data[`speedSecondReading${i}`] || 0) - Number(data[`speedFirstReading${i}`] || 0));
+                }
+                total -= Number(data.speedTestQuantity || 0);
+            } else if (type === 'diesel') {
+                for (let i = 1; i <= 6; i++) {
+                    total += (Number(data[`dieselSecondReading${i}`] || 0) - Number(data[`dieselFirstReading${i}`] || 0));
+                }
+                total -= Number(data.dieselTestQuantity || 0);
+            } else { // petrol
+                for (let i = 1; i <= 6; i++) {
+                    total += (Number(data[`secondReading${i}`] || 0) - Number(data[`firstReading${i}`] || 0));
+                }
+                total -= Number(data.petrolTestQuantity || 0);
+            }
+            return total;
+        };
+
+        // Calculate differences: (Old Sale - New Sale)
+        // If Old > New: Sale decreased, so we ADD back the difference to stock.
+        // If New > Old: Sale increased, so we SUBTRACT the difference from stock.
+        const diffP = getFuelSales(oldEntry, 'petrol') - getFuelSales(newData, 'petrol');
+        const diffD = getFuelSales(oldEntry, 'diesel') - getFuelSales(newData, 'diesel');
+        const diffS = getFuelSales(oldEntry, 'speed') - getFuelSales(newData, 'speed');
+
+        // Apply differences to TankStock
+        await TankStock.findOneAndUpdate({ fuelType: 'Petrol' }, { $inc: { currentLiters: diffP } });
+        await TankStock.findOneAndUpdate({ fuelType: 'Diesel' }, { $inc: { currentLiters: diffD } });
+        await TankStock.findOneAndUpdate({ fuelType: 'Speed' }, { $inc: { currentLiters: diffS } });
+
+
+        // --- PART B: PACKED OIL SYNCHRONIZATION ---
 
         // 2. REVERT: Add the old quantities back into the OilStock
         if (oldEntry.packedOilEntries && oldEntry.packedOilEntries.length > 0) {
@@ -1006,6 +1149,8 @@ app.put('/api/reading/:id', async (req, res) => {
             }
         }
 
+        // --- PART C: UPDATE THE DOCUMENT ---
+
         // 4. Update the reading document with the new data
         const updatedReading = await Reading.findByIdAndUpdate(id, newData, { 
             new: true, 
@@ -1014,7 +1159,7 @@ app.put('/api/reading/:id', async (req, res) => {
 
         res.status(200).json(updatedReading);
     } catch (error) {
-        console.error('Error updating reading:', error);
+        console.error('Error updating reading and stock:', error);
         res.status(500).json({ message: 'Error updating reading', error: error.message });
     }
 });
