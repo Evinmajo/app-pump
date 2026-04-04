@@ -1176,6 +1176,21 @@ app.put('/api/reading/:id', async (req, res) => {
     }
 });
 
+// Add this to your Express routes
+app.post('/api/updateDefaults', async (req, res) => {
+    try {
+        const newReadings = req.body;
+        
+        // Update your 'Defaults' collection in MongoDB
+        // Using { upsert: true } ensures it creates the document if it doesn't exist
+        await DefaultReading.updateOne({}, newReadings, { upsert: true });
+        
+        res.status(200).json({ message: 'Success' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update defaults' });
+    }
+});
+
 app.put('/api/defaults/update', async (req, res) => {
     try {
         const updated = await DefaultReading.findOneAndUpdate({}, req.body, { upsert: true, new: true });
