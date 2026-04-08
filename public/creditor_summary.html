@@ -43,6 +43,7 @@
                             <th class="px-6 py-4 text-xs font-semibold text-slate-600 uppercase tracking-wider">Party Name</th>
                             <th class="px-6 py-4 text-xs font-semibold text-slate-600 uppercase tracking-wider text-right">Total Credit</th>
                             <th class="px-6 py-4 text-xs font-semibold text-slate-600 uppercase tracking-wider text-right">Total Credit Return</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-600 uppercase tracking-wider text-right">Total Credit Return Bank</th>
                             <th class="px-6 py-4 text-xs font-semibold text-slate-600 uppercase tracking-wider text-right">Pending Balance</th>
                         </tr>
                     </thead>
@@ -59,65 +60,78 @@
     </div>
 
     <script>
-        let allData = [];
+    let allData = [];
 
-        async function loadSummary() {
-            try {
-                // For demo purposes: if API fails, you can test with mock data
-                const response = await fetch('/api/reports/creditor-summary');
-                allData = await response.json();
-                renderTable(allData);
-            } catch (error) {
-                console.error("Fetch error:", error);
-                // Placeholder if no API is available
-                allData = [
-                    { name: "Acme Corp", totalCredits: "5000.00", totalDebits: "2000.00", pendingBalance: "3000.00" },
-                    { name: "Global Logistics", totalCredits: "1000.00", totalDebits: "4500.00", pendingBalance: "-3500.00" }
-                ];
-                renderTable(allData);
-            }
+    async function loadSummary() {
+        try {
+            const response = await fetch('/api/reports/creditor-summary');
+            allData = await response.json();
+            renderTable(allData);
+        } catch (error) {
+            console.error("Fetch error:", error);
+            // Updated mock data to include totalDebitBank for testing
+            allData = [
+                { 
+                    name: "Acme Corp", 
+                    totalCredits: "5000.00", 
+                    totalDebits: "1000.00", 
+                    totalDebitBank: "500.00", 
+                    pendingBalance: "3500.00" 
+                },
+                { 
+                    name: "Global Logistics", 
+                    totalCredits: "1000.00", 
+                    totalDebits: "200.00", 
+                    totalDebitBank: "1000.00", 
+                    pendingBalance: "-200.00" 
+                }
+            ];
+            renderTable(allData);
         }
+    }
 
-        function renderTable(data) {
-            const tbody = document.getElementById('tableBody');
-            const totalDisplay = document.getElementById('grandTotal');
-            tbody.innerHTML = '';
-            let grandTotal = 0;
+    function renderTable(data) {
+        const tbody = document.getElementById('tableBody');
+        const totalDisplay = document.getElementById('grandTotal');
+        tbody.innerHTML = '';
+        let grandTotal = 0;
 
-            data.forEach(item => {
-                const balance = parseFloat(item.pendingBalance);
-                grandTotal += balance;
-                
-                const balanceClass = balance > 0 ? 'text-red-600 bg-red-50' : 'text-emerald-600 bg-emerald-50';
-                
-                const row = `
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-4">
-                            <div class="font-semibold text-slate-700">${item.name}</div>
-                        </td>
-                        <td class="px-6 py-4 text-right text-slate-600">₹${item.totalCredits}</td>
-                        <td class="px-6 py-4 text-right text-slate-600">₹${item.totalDebits}</td>
-                        <td class="px-6 py-4 text-right">
-                            <span class="inline-block px-3 py-1 rounded-full text-sm font-bold ${balanceClass}">
-                                ₹${item.pendingBalance}
-                            </span>
-                        </td>
-                    </tr>
-                `;
-                tbody.innerHTML += row;
-            });
+        data.forEach(item => {
+            // Formula: totalCredit - totalDebit - totaldebitbank
+            const balance = parseFloat(item.pendingBalance);
+            grandTotal += balance;
+            
+            const balanceClass = balance > 0 ? 'text-red-600 bg-red-50' : 'text-emerald-600 bg-emerald-50';
+            
+            const row = `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4">
+                        <div class="font-semibold text-slate-700">${item.name}</div>
+                    </td>
+                    <td class="px-6 py-4 text-right text-slate-600">₹${item.totalCredits}</td>
+                    <td class="px-6 py-4 text-right text-slate-600">₹${item.totalDebits}</td>
+                    <td class="px-6 py-4 text-right text-indigo-600 font-medium">₹${item.totalDebitBank || '0.00'}</td>
+                    <td class="px-6 py-4 text-right">
+                        <span class="inline-block px-3 py-1 rounded-full text-sm font-bold ${balanceClass}">
+                            ₹${item.pendingBalance}
+                        </span>
+                    </td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
 
-            totalDisplay.innerText = `₹${grandTotal.toFixed(2)}`;
-        }
+        totalDisplay.innerText = `₹${grandTotal.toFixed(2)}`;
+    }
 
-        function filterTable() {
-            const term = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = allData.filter(item => item.name.toLowerCase().includes(term));
-            renderTable(filtered);
-        }
+    function filterTable() {
+        const term = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = allData.filter(item => item.name.toLowerCase().includes(term));
+        renderTable(filtered);
+    }
 
-        document.addEventListener('DOMContentLoaded', loadSummary);
-    </script>
+    document.addEventListener('DOMContentLoaded', loadSummary);
+</script>
 
 </body>
 </html>

@@ -334,14 +334,23 @@
                 </div>
 
                 <div class="col-span-1">
-                    <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Credit Return Entries</h2>
+                    <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Debit Entries</h2>
                     <div id="debitEntriesContainer" class="space-y-3">
                         </div>
                     <div class="mt-4 flex space-x-2">
-                        <button type="button" onclick="addDynamicEntry('debit')" class="px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-bold">Add Credit Return</button>
+                        <button type="button" onclick="addDynamicEntry('debit')" class="px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-bold">Add Debit</button>
                     </div>
                 </div>
             </div>
+            <hr class="my-8 border-t border-gray-300">
+            <div class="col-span-1 md:col-span-2 mt-8">
+    <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Debit Bank (Online Payments)</h2>
+    <div id="debitBankEntriesContainer" class="space-y-3">
+        </div>
+    <div class="mt-4 flex justify-center">
+        <button type="button" onclick="addDynamicEntry('bank')" class="px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-bold">Add Bank Entry</button>
+    </div>
+</div>
 
             <hr class="my-8 border-t border-gray-300">
 
@@ -370,7 +379,13 @@
             </div>
 
             <hr class="my-8 border-t border-gray-300">
-
+            <div class="mb-6">
+                <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Cash Bank Deposit</h2>
+                <input type="number" id="cashBankDeposit" name="cashBankDeposit" step="0.01"
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                       placeholder="Enter amount deposited to bank">
+            </div>
+<hr class="my-8 border-t border-gray-300">
             <div class="grid grid-cols-1 mt-8">
                 <div class="col-span-1">
                     <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Denomination Calculator</h2>
@@ -519,14 +534,20 @@
         container.appendChild(entryDiv);
     }
 
-    function addDynamicEntry(type, name = '', amount = '') {
-    const containerId = type === 'credit' ? 'creditEntriesContainer' : 'debitEntriesContainer';
+function addDynamicEntry(type, name = '', amount = '') {
+    let containerId;
+    // Determine which container to use based on type
+    if (type === 'credit') containerId = 'creditEntriesContainer';
+    else if (type === 'debit') containerId = 'debitEntriesContainer';
+    else if (type === 'bank') containerId = 'debitBankEntriesContainer';
+
     const container = document.getElementById(containerId);
+    if (!container) return;
 
     const entryDiv = document.createElement('div');
-    entryDiv.className = 'flex items-center gap-x-2 mb-3 dynamic-row';
+    // Using a shared class for style but a specific class for data collection
+    entryDiv.className = `flex items-center gap-x-2 mb-3 ${type}-row`;
 
-    // Placeholder option is selected if name is empty
     let optionsHtml = `<option value="" disabled ${name === '' ? 'selected' : ''}>Select Name</option>`;
     availableParties.forEach(p => {
         optionsHtml += `<option value="${p.name}" ${p.name === name ? 'selected' : ''}>${p.name}</option>`;
@@ -612,6 +633,7 @@ function addExpenseEntry(name = '', amount = '') {
                         document.getElementById('diesel').value = fetchedData.diesel || '';
                         document.getElementById('oil').value = fetchedData.oil || '';
                         document.getElementById('speed').value = fetchedData.speed || '';
+                        document.getElementById('cashBankDeposit').value = fetchedData.cashBankDeposit || '';
                         
                         // Readings
                         document.getElementById('oilFirstReading').value = fetchedData.oilFirstReading || '';
@@ -631,7 +653,7 @@ function addExpenseEntry(name = '', amount = '') {
                         
                         // Diesel Nozzle Readings
                         for(let i=1; i<=6; i++) {
-                            document.getElementById(`dieselFirstReading${i}`).value = fetchedData[`dieselFirstReading${i}`] || ''; // ശ്രദ്ധിക്കുക: നിങ്ങളുടെ കോഡിൽ ഐഡി തെറ്റാൻ സാധ്യതയുണ്ട്
+                            document.getElementById(`dieselFirstReading${i}`).value = fetchedData[`dieselFirstReading${i}`] || ''; 
                             document.getElementById(`dieselSecondReading${i}`).value = fetchedData[`dieselSecondReading${i}`] || '';
                         }
 
@@ -672,6 +694,13 @@ function addExpenseEntry(name = '', amount = '') {
                         if (fetchedData.debitEntries) {
                             document.getElementById('debitEntriesContainer').innerHTML = '';
                             fetchedData.debitEntries.forEach(e => addDynamicEntry('debit', e.name, e.amount));
+                        }
+                        if (fetchedData.debitBankEntries && Array.isArray(fetchedData.debitBankEntries)) {
+                            const bankContainer = document.getElementById('debitBankEntriesContainer');
+                            if (bankContainer) {
+                                bankContainer.innerHTML = ''; 
+                                fetchedData.debitBankEntries.forEach(e => addDynamicEntry('bank', e.name, e.amount));
+                            }
                         }
                     }
                 }
@@ -715,6 +744,7 @@ function addExpenseEntry(name = '', amount = '') {
             diesel: getNumberValue('diesel'),
             oil: getNumberValue('oil'),
             speed: getNumberValue('speed'),
+            cashBankDeposit: getNumberValue('cashBankDeposit'),
             oilFirstReading: getNumberValue('oilFirstReading'),
             oilSecondReading: getNumberValue('oilSecondReading'),
             speedFirstReading1: getNumberValue('speedFirstReading1'),
@@ -795,6 +825,10 @@ function addExpenseEntry(name = '', amount = '') {
         data.debitEntries = Array.from(document.querySelectorAll('#debitEntriesContainer select')).map((sel, idx) => ({
             name: sel.value,
             amount: parseFloat(document.querySelectorAll('#debitEntriesContainer .dynamic-entry-amount')[idx].value) || 0
+        }));
+        data.debitBankEntries = Array.from(document.querySelectorAll('.bank-row')).map(row => ({
+            name: row.querySelector('.dynamic-entry-name').value,
+            amount: parseFloat(row.querySelector('.dynamic-entry-amount').value) || 0
         }));
 
         try {

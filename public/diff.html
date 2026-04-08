@@ -68,6 +68,7 @@
 </div>
 
         <div id="tablesWrapper"></div>
+        
         <div id="inventoryHistoryContainer" class="mt-12 hidden">
     <h2 class="text-xl font-bold text-gray-800 mb-4 border-b-2 border-gray-200 pb-2">Inventory & Adjustment History</h2>
     <div class="overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-200">
@@ -96,6 +97,45 @@
             No readings found for the selected date.
         </div>
     </div>
+    <div id="masterReadingsContainer" class="mt-12">
+    <h2 class="text-xl font-bold text-gray-800 mb-4 border-b-2 border-green-500 pb-2">
+        Full Shift Meter Log (All Nozzles)
+    </h2>
+    <div class="overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-200">
+        <table id="masterTable" class="min-w-[3200px] text-[10px] md:text-xs text-left border-collapse">
+            <thead class="bg-gray-800 text-white">
+                <tr>
+                    <th class="border p-2 text-center" rowspan="2">Date</th>
+                    <th class="border p-2 text-center" rowspan="2">Staff</th>
+                    <th class="border p-2 text-center" rowspan="2">Shift</th>
+                    <th class="border p-2 text-center bg-orange-700" colspan="12">Petrol Readings (MS1 - MS6)</th>
+                    <th class="border p-2 text-center bg-blue-700" colspan="12">Diesel Readings (HSD1 - HSD6)</th>
+                    <th class="border p-2 text-center bg-purple-700" colspan="6">Speed Readings (3A - 5A)</th>
+                    <th class="border p-2 text-center bg-yellow-600" colspan="2">Oil</th>
+                </tr>
+                <tr class="uppercase text-[9px]">
+                    <th class="border p-1 bg-orange-600">MS1 (1st)</th><th class="border p-1 bg-orange-600">MS1 (2nd)</th>
+                    <th class="border p-1 bg-orange-600">MS2 (1st)</th><th class="border p-1 bg-orange-600">MS2 (2nd)</th>
+                    <th class="border p-1 bg-orange-600">MS3 (1st)</th><th class="border p-1 bg-orange-600">MS3 (2nd)</th>
+                    <th class="border p-1 bg-orange-600">MS4 (1st)</th><th class="border p-1 bg-orange-600">MS4 (2nd)</th>
+                    <th class="border p-1 bg-orange-600">MS5 (1st)</th><th class="border p-1 bg-orange-600">MS5 (2nd)</th>
+                    <th class="border p-1 bg-orange-600">MS6 (1st)</th><th class="border p-1 bg-orange-600">MS6 (2nd)</th>
+                    <th class="border p-1 bg-blue-600">D1 (1st)</th><th class="border p-1 bg-blue-600">D1 (2nd)</th>
+                    <th class="border p-1 bg-blue-600">D2 (1st)</th><th class="border p-1 bg-blue-600">D2 (2nd)</th>
+                    <th class="border p-1 bg-blue-600">D3 (1st)</th><th class="border p-1 bg-blue-600">D3 (2nd)</th>
+                    <th class="border p-1 bg-blue-600">D4 (1st)</th><th class="border p-1 bg-blue-600">D4 (2nd)</th>
+                    <th class="border p-1 bg-blue-600">D5 (1st)</th><th class="border p-1 bg-blue-600">D5 (2nd)</th>
+                    <th class="border p-1 bg-blue-600">D6 (1st)</th><th class="border p-1 bg-blue-600">D6 (2nd)</th>
+                    <th class="border p-1 bg-purple-600">3A (1st)</th><th class="border p-1 bg-purple-600">3A (2nd)</th>
+                    <th class="border p-1 bg-purple-600">4A (1st)</th><th class="border p-1 bg-purple-600">4A (2nd)</th>
+                    <th class="border p-1 bg-purple-600">5A (1st)</th><th class="border p-1 bg-purple-600">5A (2nd)</th>
+                    <th class="border p-1 bg-yellow-500">Opening</th><th class="border p-1 bg-yellow-500">Closing</th>
+                </tr>
+            </thead>
+            <tbody id="masterTableBody"></tbody>
+        </table>
+    </div>
+</div>
 
     <script>
         let allReadings = [];
@@ -112,6 +152,7 @@
                 allReadings = await response.json();
                 const historyRes = await fetch('/api/tanks/history');
                 allHistory = await historyRes.json();
+                renderMasterTable(allReadings);
                 displayLastSubmittedReadings(allReadings);
                 renderShiftWiseTables(allReadings);
                 renderInventoryHistory(allHistory);
@@ -164,7 +205,51 @@
 
     document.getElementById('totalInventoryLoss').innerText = totalLoss.toFixed(2) + ' L';
 }
+function renderMasterTable(data) {
+    const tbody = document.getElementById('masterTableBody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
 
+    // Sort data: newest dates at the top
+    const sortedData = [...data].sort((a, b) => new Date(b.currentDate) - new Date(a.currentDate));
+
+    sortedData.forEach(r => {
+        // Get staff name from your staffMap (or use the ID if not found)
+        const staffName = typeof staffMap !== 'undefined' ? (staffMap[r.selectedId] || r.selectedId) : r.selectedId;
+        
+        const row = document.createElement('tr');
+        row.className = "hover:bg-gray-50 border-b border-gray-200 transition-colors";
+        
+        row.innerHTML = `
+            <td class="border p-2 font-bold whitespace-nowrap">${r.currentDate}</td>
+            <td class="border p-2 font-medium text-blue-700">${staffName}</td>
+            <td class="border p-2 text-center">${r.shift || '-'}</td>
+            
+            <td class="border p-1 text-right bg-orange-50">${r.firstReading1}</td><td class="border p-1 text-right font-bold">${r.secondReading1}</td>
+            <td class="border p-1 text-right bg-orange-50">${r.firstReading2}</td><td class="border p-1 text-right font-bold">${r.secondReading2}</td>
+            <td class="border p-1 text-right bg-orange-50">${r.firstReading3}</td><td class="border p-1 text-right font-bold">${r.secondReading3}</td>
+            <td class="border p-1 text-right bg-orange-50">${r.firstReading4}</td><td class="border p-1 text-right font-bold">${r.secondReading4}</td>
+            <td class="border p-1 text-right bg-orange-50">${r.firstReading5}</td><td class="border p-1 text-right font-bold">${r.secondReading5}</td>
+            <td class="border p-1 text-right bg-orange-50">${r.firstReading6}</td><td class="border p-1 text-right font-bold">${r.secondReading6}</td>
+            
+            <td class="border p-1 text-right bg-blue-50">${r.dieselFirstReading1}</td><td class="border p-1 text-right font-bold">${r.dieselSecondReading1}</td>
+            <td class="border p-1 text-right bg-blue-50">${r.dieselFirstReading2}</td><td class="border p-1 text-right font-bold">${r.dieselSecondReading2}</td>
+            <td class="border p-1 text-right bg-blue-50">${r.dieselFirstReading3}</td><td class="border p-1 text-right font-bold">${r.dieselSecondReading3}</td>
+            <td class="border p-1 text-right bg-blue-50">${r.dieselFirstReading4}</td><td class="border p-1 text-right font-bold">${r.dieselSecondReading4}</td>
+            <td class="border p-1 text-right bg-blue-50">${r.dieselFirstReading5}</td><td class="border p-1 text-right font-bold">${r.dieselSecondReading5}</td>
+            <td class="border p-1 text-right bg-blue-50">${r.dieselFirstReading6}</td><td class="border p-1 text-right font-bold">${r.dieselSecondReading6}</td>
+            
+            <td class="border p-1 text-right bg-purple-50">${r.speedFirstReading1}</td><td class="border p-1 text-right font-bold">${r.speedSecondReading1}</td>
+            <td class="border p-1 text-right bg-purple-50">${r.speedFirstReading2}</td><td class="border p-1 text-right font-bold">${r.speedSecondReading2}</td>
+            <td class="border p-1 text-right bg-purple-50">${r.speedFirstReading3}</td><td class="border p-1 text-right font-bold">${r.speedSecondReading3}</td>
+            
+            <td class="border p-1 text-right bg-yellow-50">${r.oilFirstReading}</td>
+            <td class="border p-1 text-right font-bold bg-yellow-100">${r.oilSecondReading}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
 function displayLastSubmittedReadings(data) {
     const openingGrid = document.getElementById('openingReadingsGrid');
     const lastGrid = document.getElementById('lastReadingsGrid');
@@ -467,12 +552,14 @@ function displayLastSubmittedReadings(data) {
         // Accumulate Denominations
         acc.totalNotesOnly += notesOnly;
         acc.totalPhysicalCash += (notesOnly + coinsOnly);
+        acc.totalCashBankDeposit += (Number(r.cashBankDeposit) || 0);
 
         // Aggregate Expenses, Packed Oil, Credit, and Debit
         acc.totalExpenses += (r.expenseEntries || []).reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
         acc.totalPackedOilPrice += (r.packedOilEntries || []).reduce((sum, po) => sum + (Number(po.price) || 0), 0);
         acc.totalCredit += (r.creditEntries || []).reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
         acc.totalDebit += (r.debitEntries || []).reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
+        acc.totalDebitBank += (r.debitBankEntries || []).reduce((sum, db) => sum + (Number(db.amount) || 0), 0);
 
         // Volumes and Monetary Values
         acc.pVol += netP; acc.dVol += netD; acc.sVol += netS; acc.oVol += netO;
@@ -488,8 +575,13 @@ function displayLastSubmittedReadings(data) {
         totalExpenses:0, totalCredit:0, totalDebit:0,
         totalPackedOilPrice: 0,
         totalNotesOnly: 0,
-        totalPhysicalCash: 0
+        totalPhysicalCash: 0,
+        totalDebitBank: 0,
+        totalCashBankDeposit: 0
     });
+
+    const netNotesInHand = summaryData.totalNotesOnly - summaryData.totalCashBankDeposit;
+    const netTotalCashWithCoins = summaryData.totalPhysicalCash - summaryData.totalCashBankDeposit;
 
     const totalRevenue = summaryData.pVal + summaryData.dVal + summaryData.sVal + summaryData.oVal + summaryData.totalPackedOilPrice;
     const netFinalAmount = totalRevenue - summaryData.totalExpenses;
@@ -523,15 +615,30 @@ function displayLastSubmittedReadings(data) {
         </div>
     
         <div class="mt-6 space-y-3">
-            <a href= "/hbvheiwbvhebnjhfrbvhjdbhvbfxjkbkdbhadmin" ><div class="p-4 bg-emerald-50 border border-emerald-100 rounded-lg flex justify-between items-center text-emerald-800">
-                <span class="font-bold uppercase text-sm tracking-wide">Total Collected (Notes Only):</span>
-                <span class="text-xl font-bold">₹${summaryData.totalNotesOnly.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-            </div></a>
+            <a href="/staff-denominations">
+                <div class="p-4 bg-emerald-50 border border-emerald-100 rounded-lg flex justify-between items-center text-emerald-800">
+                    <div class="flex flex-col">
+                        <span class="font-bold uppercase text-sm tracking-wide">Total Collected (Notes in Hand):</span>
+                        <span class="text-[10px] opacity-70 italic font-medium">Gross: ₹${summaryData.totalNotesOnly.toLocaleString()} | Dep: ₹${summaryData.totalCashBankDeposit.toLocaleString()}</span>
+                    </div>
+                    <span class="text-xl font-bold">₹${netNotesInHand.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                </div>
+            </a>
 
-            <a href= "/hbvheiwbvhebnjhfrbvhjdbhvbfxjkbkdbhadmin" ><div class="p-4 bg-teal-50 border border-teal-100 rounded-lg flex justify-between items-center text-teal-800">
-                <span class="font-bold uppercase text-sm tracking-wide">Total Collected (Notes + Coins):</span>
-                <span class="text-xl font-bold">₹${summaryData.totalPhysicalCash.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-            </div></a>
+            <div class="p-4 bg-gray-50 border border-gray-200 rounded-lg flex justify-between items-center text-gray-600">
+                <span class="font-bold uppercase text-sm tracking-wide">Cash Bank Deposit:</span>
+                <span class="text-xl font-bold">₹${summaryData.totalCashBankDeposit.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+            </div>
+
+            <a href="/staff-denominations">
+                <div class="p-4 bg-teal-50 border border-teal-100 rounded-lg flex justify-between items-center text-teal-800">
+                    <div class="flex flex-col">
+                        <span class="font-bold uppercase text-sm tracking-wide">Total Collected (Notes + Coins in Hand):</span>
+                        <span class="text-[10px] opacity-70 italic font-medium">Gross: ₹${summaryData.totalPhysicalCash.toLocaleString()} | Dep: ₹${summaryData.totalCashBankDeposit.toLocaleString()}</span>
+                    </div>
+                    <span class="text-xl font-bold">₹${netTotalCashWithCoins.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                </div>
+            </a>
 
             <a href="/uygrbyeyeggbey5ebgy7fgvifview_transactions">
                 <div class="p-4 bg-red-50 border border-red-100 rounded-lg flex justify-between items-center text-red-700">
@@ -558,6 +665,12 @@ function displayLastSubmittedReadings(data) {
                 <div class="p-4 bg-indigo-50 border border-indigo-100 rounded-lg flex justify-between items-center text-indigo-700">
                     <span class="font-bold uppercase text-sm tracking-wide">Total Credit Return Amount:</span>
                     <span class="text-xl font-bold">₹${summaryData.totalDebit.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                </div>
+            </a>
+            <a href="/uygrbyeyeggbey5ebgy7fgvifview_transactions">
+                <div class="p-4 bg-sky-50 border border-sky-100 rounded-lg flex justify-between items-center text-sky-700">
+                    <span class="font-bold uppercase text-sm tracking-wide">Total Credit Return Bank:</span>
+                    <span class="text-xl font-bold">₹${summaryData.totalDebitBank.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
                 </div>
             </a>
         </div>
@@ -628,6 +741,7 @@ function displayLastSubmittedReadings(data) {
     // 3. Render Sales Data
     displayLastSubmittedReadings(filteredReadings);
     renderShiftWiseTables(filteredReadings);
+    renderMasterTable(filteredReadings);
 
     // 4. Render History Reports (The function we created in the previous step)
     renderInventoryHistory(filteredHistory);

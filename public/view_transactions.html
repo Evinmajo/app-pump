@@ -60,10 +60,9 @@
             <div class="flex flex-col min-w-[140px] flex-1">
                 <label for="typeSelect" class="text-xs text-gray-600 mb-1 font-bold">Type:</label>
                 <select id="typeSelect" class="p-2.5 border border-gray-300 rounded-lg text-base w-full">
-                    <option value="all">All (Cr/Cr Ret)</option>
-                    <option value="credit">Credits Only</option>
+                    <option value="all">All (Cr/Cr Ret/Bank)</option> <option value="credit">Credits Only</option>
                     <option value="debit">Credit Return Only</option>
-                    <option value="expense">Expenses Only</option>
+                    <option value="debitbank">Credit Return Bank Only</option> <option value="expense">Expenses Only</option>
                 </select>
             </div>
 
@@ -115,92 +114,112 @@
         }
 
         async function fetchTransactions() {
-            const fromDate = fromDateInput.value;
-            const toDate = toDateInput.value;
-            const staffId = staffSelect.value;
-            const filterType = typeSelect.value;
-            const searchTerm = searchInput.value.toLowerCase();
+    const fromDate = fromDateInput.value;
+    const toDate = toDateInput.value;
+    const staffId = staffSelect.value;
+    const filterType = typeSelect.value;
+    const searchTerm = searchInput.value.toLowerCase();
 
-            if (!fromDate || !toDate) return;
+    if (!fromDate || !toDate) return;
 
-            try {
-                const response = await fetch(`/api/transactions/creditDebit?fromDate=${fromDate}&toDate=${toDate}&staffId=${staffId}`);
-                if (!response.ok) throw new Error('Server Error');
+    try {
+        const response = await fetch(`/api/transactions/creditDebit?fromDate=${fromDate}&toDate=${toDate}&staffId=${staffId}`);
+        if (!response.ok) throw new Error('Server Error');
 
-                const data = await response.json();
-                transactionsDisplay.innerHTML = "";
-                let totalCredit = 0, totalDebit = 0, totalExpense = 0;
-                let hasAnyData = false;
+        const data = await response.json();
+        transactionsDisplay.innerHTML = "";
+        
+        // Initialize all totals including Debit Bank
+        let totalCredit = 0, totalDebit = 0, totalDebitBank = 0, totalExpense = 0;
+        let hasAnyData = false;
 
-                for (const date in data) {
-                    const dayData = data[date];
-                    // Added 'date-block' class to prevent splitting date headers
-                    let dateHTML = `<div class="date-block mb-5 border border-gray-200 rounded-xl p-3 bg-gray-50/50">
-                                    <h3 class="text-[#2c3e50] m-0 mb-3 text-lg md:text-xl border-b-2 border-gray-200 pb-2 font-bold">${date}</h3>`;
-                    let hasDailyData = false;
+        for (const date in data) {
+            const dayData = data[date];
+            let dateHTML = `<div class="date-block mb-5 border border-gray-200 rounded-xl p-3 bg-gray-50/50">
+                            <h3 class="text-[#2c3e50] m-0 mb-3 text-lg md:text-xl border-b-2 border-gray-200 pb-2 font-bold">${date}</h3>`;
+            let hasDailyData = false;
 
-                    const process = (entries, label) => {
-                        if (!entries || !Array.isArray(entries)) return;
-                        entries.forEach(entry => {
-                            const entryName = entry.name || 'Unnamed';
-                            const isAllType = filterType === 'all' && (label === 'Credit' || label === 'Debit');
-                            const isSpecificType = filterType === label.toLowerCase();
-                            const matchesSearch = entryName.toLowerCase().includes(searchTerm);
+            const process = (entries, label) => {
+                if (!entries || !Array.isArray(entries)) return;
+                entries.forEach(entry => {
+                    const entryName = entry.name || 'Unnamed';
+                    
+                    // Logic for "All" filter to include Credits, Returns, and Bank entries
+                    const isAllType = filterType === 'all' && (label === 'Credit' || label === 'Debit' || label === 'Debit Bank');
+                    
+                    // Matches specific dropdown values (e.g., 'debitbank' matches 'Debit Bank')
+                    const isSpecificType = filterType === label.toLowerCase().replace(" ", "");
+                    const matchesSearch = entryName.toLowerCase().includes(searchTerm);
 
-                            if ((isAllType || isSpecificType) && matchesSearch) {
-                                const amount = parseFloat(entry.amount) || 0;
-                                let colorClass = "text-red-600";
-                                if (label === 'Credit') colorClass = "text-green-600";
-                                if (label === 'Expense') colorClass = "text-orange-500";
+                    if ((isAllType || isSpecificType) && matchesSearch) {
+                        const amount = parseFloat(entry.amount) || 0;
+                        
+                        // Dynamic coloring based on transaction type
+                        let colorClass = "text-red-600"; // Default for Credit Returns
+                        if (label === 'Credit') colorClass = "text-green-600";
+                        if (label === 'Debit Bank') colorClass = "text-blue-700"; 
+                        if (label === 'Expense') colorClass = "text-orange-500";
 
-                                // Added 'transaction-row' class to prevent splitting individual entries
-                                dateHTML += `
-                                    <div class="transaction-row flex justify-between items-center p-3 border-b border-dashed border-gray-200 cursor-pointer rounded-md hover:bg-blue-50 transition-colors text-sm md:text-base" onclick="quickSearch('${entryName.replace(/'/g, "\\'")}')">
-                                        <span><strong>${entryName}</strong><br><small class="text-gray-500">(${label})</small></span>
-                                        <span class="${colorClass} font-bold">₹${amount.toFixed(2)}</span>
-                                    </div>`;
-                                
-                                if (label === 'Credit') totalCredit += amount;
-                                if (label === 'Debit') totalDebit += amount;
-                                if (label === 'Expense') totalExpense += amount;
-                                hasDailyData = true;
-                                hasAnyData = true;
-                            }
-                        });
-                    };
+                        dateHTML += `
+                            <div class="transaction-row flex justify-between items-center p-3 border-b border-dashed border-gray-200 cursor-pointer rounded-md hover:bg-blue-50 transition-colors text-sm md:text-base" onclick="quickSearch('${entryName.replace(/'/g, "\\'")}')">
+                                <span><strong>${entryName}</strong><br><small class="text-gray-500">(${label})</small></span>
+                                <span class="${colorClass} font-bold">₹${amount.toFixed(2)}</span>
+                            </div>`;
+                        
+                        // Accumulate totals based on label
+                        if (label === 'Credit') totalCredit += amount;
+                        if (label === 'Debit') totalDebit += amount;
+                        if (label === 'Debit Bank') totalDebitBank += amount;
+                        if (label === 'Expense') totalExpense += amount;
+                        
+                        hasDailyData = true;
+                        hasAnyData = true;
+                    }
+                });
+            };
 
-                    process(dayData.credits, 'Credit');
-                    process(dayData.debits, 'Debit');
-                    process(dayData.expenseEntries, 'Expense');
+            // Process all four categories from the API response
+            process(dayData.credits, 'Credit');
+            process(dayData.debits, 'Debit');
+            process(dayData.debitBankEntries, 'Debit Bank');
+            process(dayData.expenseEntries, 'Expense');
 
-                    dateHTML += `</div>`;
-                    if (hasDailyData) transactionsDisplay.innerHTML += dateHTML;
-                }
-
-                if (!hasAnyData) {
-                    transactionsDisplay.innerHTML = '<p class="text-center text-gray-500 italic py-5">No matching records found.</p>';
-                    transactionSummary.classList.add('hidden');
-                    return;
-                }
-
-                transactionSummary.classList.remove('hidden');
-                updateSummary(filterType, totalCredit, totalDebit, totalExpense);
-
-            } catch (error) {
-                transactionsDisplay.innerHTML = `<p class="text-center text-red-600 py-5">Error fetching data.</p>`;
-            }
+            dateHTML += `</div>`;
+            if (hasDailyData) transactionsDisplay.innerHTML += dateHTML;
         }
 
-        function updateSummary(type, cr, dr, ex) {
-            if (type === 'all') {
-                transactionSummary.innerHTML = `Cr: ₹${cr.toFixed(2)} | Cr Ret: ₹${dr.toFixed(2)} <br><span class="text-[#2c3e50]">Net Total: ₹${(cr - dr).toFixed(2)}</span>`;
-            } else if (type === 'expense') {
-                transactionSummary.innerHTML = `Total Expenses: ₹${ex.toFixed(2)}`;
-            } else {
-                const total = (type === 'credit') ? cr : dr;
-                transactionSummary.innerHTML = `Total ${type.charAt(0).toUpperCase() + type.slice(1)}s: ₹${total.toFixed(2)}`;
-            }
+        if (!hasAnyData) {
+            transactionsDisplay.innerHTML = '<p class="text-center text-gray-500 italic py-5">No matching records found.</p>';
+            transactionSummary.classList.add('hidden');
+            return;
         }
+
+        transactionSummary.classList.remove('hidden');
+        // Pass all totals to the summary function
+        updateSummary(filterType, totalCredit, totalDebit, totalDebitBank, totalExpense);
+
+    } catch (error) {
+        transactionsDisplay.innerHTML = `<p class="text-center text-red-600 py-5">Error fetching data.</p>`;
+    }
+}
+
+        function updateSummary(type, cr, dr, db, ex) {
+    if (type === 'all') {
+        // Formula: Net Total = credit - debit - debit bank
+        const netTotal = cr - dr - db;
+        transactionSummary.innerHTML = `
+            Cr: ₹${cr.toFixed(2)} | Cr Ret: ₹${dr.toFixed(2)} | Cr Ret Bank: ₹${db.toFixed(2)} 
+            <br><span class="text-[#2c3e50] font-bold">Net Total: ₹${netTotal.toFixed(2)}</span>`;
+    } else if (type === 'debitbank') {
+        transactionSummary.innerHTML = `Total Debit Bank: ₹${db.toFixed(2)}`;
+    } else if (type === 'expense') {
+        transactionSummary.innerHTML = `Total Expenses: ₹${ex.toFixed(2)}`;
+    } else {
+        const total = (type === 'credit') ? cr : (type === 'debit' ? dr : 0);
+        const label = type === 'credit' ? 'Credits' : 'Credit Returns';
+        transactionSummary.innerHTML = `Total ${label}: ₹${total.toFixed(2)}`;
+    }
+}
 
         function downloadPDF() {
             const element = document.getElementById('printableArea');

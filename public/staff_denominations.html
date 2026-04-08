@@ -69,7 +69,7 @@
                 </tbody>
                 <tfoot id="reportFooter" class="hidden">
                     <tr class="bg-blue-50 font-bold">
-                        <td colspan="2" class="border-t p-4 text-right text-gray-800 text-base md:text-lg uppercase">Grand Total:</td>
+                        <td colspan="2" class="border-t p-4 text-right text-gray-800 text-base md:text-lg uppercase">Total Denomination - Cash Bank Deposit:</td>
                         <td id="grandTotal" class="border-t p-4 text-right text-blue-700 text-lg md:text-xl">₹0.00</td>
                     </tr>
                 </tfoot>
@@ -78,96 +78,111 @@
     </div>
 
     <script>
-        // Your existing JS logic remains identical
-        async function populateStaffDropdown() {
-            const staffSelect = document.getElementById('staffSelect');
-            try {
-                const response = await fetch('/api/staff');
-                const staffMembers = await response.json();
-                staffMembers.forEach(staff => {
-                    const option = document.createElement('option');
-                    option.value = staff.staffId;
-                    option.textContent = staff.name;
-                    staffSelect.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Error fetching staff members:', error);
-            }
+    async function populateStaffDropdown() {
+        const staffSelect = document.getElementById('staffSelect');
+        try {
+            const response = await fetch('/api/staff');
+            const staffMembers = await response.json();
+            staffMembers.forEach(staff => {
+                const option = document.createElement('option');
+                option.value = staff.staffId;
+                option.textContent = staff.name;
+                staffSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error fetching staff members:', error);
         }
+    }
 
-        function setDefaultDates() {
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('fromDate').value = today;
-    document.getElementById('toDate').value = today;
-}
+    function setDefaultDates() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('fromDate').value = today;
+        document.getElementById('toDate').value = today;
+    }
 
-        async function fetchReport() {
-            const from = document.getElementById('fromDate').value;
-            const to = document.getElementById('toDate').value;
-            const staff = document.getElementById('staffSelect').value;
+    async function fetchReport() {
+        const from = document.getElementById('fromDate').value;
+        const to = document.getElementById('toDate').value;
+        const staff = document.getElementById('staffSelect').value;
+        
+        if (!from || !to) return alert("Please select a date range");
+
+        try {
+            const response = await fetch(`/api/reports/staff-denominations?fromDate=${from}&toDate=${to}&staff=${staff}`);
+            const data = await response.json();
             
-            if (!from || !to) return alert("Please select a date range");
+            const tbody = document.getElementById('reportContent');
+            const footer = document.getElementById('reportFooter');
+            const grandTotalEl = document.getElementById('grandTotal');
 
-            try {
-                const response = await fetch(`/api/reports/staff-denominations?fromDate=${from}&toDate=${to}&staff=${staff}`);
-                const data = await response.json();
-                
-                const tbody = document.getElementById('reportContent');
-                const footer = document.getElementById('reportFooter');
-                const grandTotalEl = document.getElementById('grandTotal');
+            if (!data || Object.keys(data).length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="p-10 text-center">No records found for this period</td></tr>';
+                footer.classList.add('hidden');
+                return;
+            }
 
-                if (!data || Object.keys(data).length === 0 || (Array.isArray(data) && data.length === 0)) {
-                    tbody.innerHTML = '<tr><td colspan="3" class="p-10 text-center">No records found for this period</td></tr>';
-                    footer.classList.add('hidden');
-                    return;
-                }
+            const groupedData = Array.isArray(data) ? data.reduce((acc, curr) => {
+                const date = curr.date;
+                if (!acc[date]) acc[date] = [];
+                acc[date].push(curr);
+                return acc;
+            }, {}) : data;
 
-                const groupedData = Array.isArray(data) ? data.reduce((acc, curr) => {
-                    const date = curr.date;
-                    if (!acc[date]) acc[date] = [];
-                    acc[date].push(curr);
-                    return acc;
-                }, {}) : data;
+            let totalSum = 0;
+            let html = '';
 
-                let totalSum = 0;
-                let html = '';
+            Object.keys(groupedData).sort((a, b) => new Date(b) - new Date(a)).forEach(date => {
+                html += `
+                    <tr class="date-header">
+                        <td colspan="3" class="p-3 border-y text-blue-900 bg-blue-50 text-sm font-bold">
+                            ${new Date(date).toLocaleDateString('en-IN', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+                        </td>
+                    </tr>
+                `;
 
-                Object.keys(groupedData).sort((a, b) => new Date(b) - new Date(a)).forEach(date => {
+                groupedData[date].forEach(row => {
+                    const amount = parseFloat(row.totalDenomination) || 0;
+                    const deposit = parseFloat(row.cashBankDeposit) || 0;
+                    
+                    // Logic: Grand Total = Denomination - Bank Deposit
+                    totalSum += (amount - deposit);
+
+                    // Row 1: Always show Collection Entry
                     html += `
-                        <tr class="date-header">
-                            <td colspan="3" class="p-3 border-y text-blue-900 bg-blue-50 text-sm font-bold">
-                                ${new Date(date).toLocaleDateString('en-IN', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
-                            </td>
+                        <tr class="transaction-row border-b hover:bg-gray-50">
+                            <td class="p-3 text-gray-400 text-xs italic">Collection Entry</td>
+                            <td class="p-3 font-medium text-gray-800">${row.name}</td>
+                            <td class="p-3 text-right font-bold text-green-700">₹${amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                         </tr>
                     `;
 
-                    groupedData[date].forEach(row => {
-                        const amount = parseFloat(row.totalDenomination) || 0;
-                        totalSum += amount;
+                    // Row 2: Show Cash Bank Deposit ONLY if it is greater than zero
+                    if (deposit > 0) {
                         html += `
-                            <tr class="transaction-row border-b hover:bg-gray-50">
-                                <td class="p-3 text-gray-400 text-xs italic">Collection Entry</td>
-                                <td class="p-3 font-medium text-gray-800">${row.name}</td>
-                                <td class="p-3 text-right font-bold text-green-700">₹${amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                            <tr class="transaction-row border-b bg-red-50 hover:bg-red-100">
+                                <td class="p-3 text-red-400 text-xs italic">Cash Bank Deposit</td>
+                                <td class="p-3 font-medium text-red-800">${row.name}</td>
+                                <td class="p-3 text-right font-bold text-red-600">- ₹${deposit.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                             </tr>
                         `;
-                    });
+                    }
                 });
+            });
 
-                tbody.innerHTML = html;
-                grandTotalEl.innerText = `₹${totalSum.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
-                footer.classList.remove('hidden');
+            tbody.innerHTML = html;
+            grandTotalEl.innerText = `₹${totalSum.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+            footer.classList.remove('hidden');
 
-            } catch (error) {
-                console.error("Error:", error);
-                alert("Could not load report data.");
-            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Could not load report data.");
         }
+    }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            populateStaffDropdown();
-            setDefaultDates();
-        });
-    </script>
+    document.addEventListener('DOMContentLoaded', () => {
+        populateStaffDropdown();
+        setDefaultDates();
+    });
+</script>
 </body>
 </html>

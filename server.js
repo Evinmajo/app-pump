@@ -46,9 +46,6 @@ app.get('/uygrbyeyeggbey5ebgy7fgvifview_transactions', (req, res) => {
 app.get('/hiyth4ygb5yhgtiuriueiuhgtuhg8price', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'price.html'));
 });
-app.get('/manage-defaults', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'defaults.html'));
-});
 // NEW: Route for the Reading Difference page
 app.get('/reading-diff', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'diff.html'));
@@ -201,7 +198,9 @@ const readingSchema = new mongoose.Schema({
    packedOilEntries: [{ name: String, amount: Number, price: Number}],
     creditEntries: [{ name: String, amount: Number }],
     debitEntries: [{ name: String, amount: Number }],
+    debitBankEntries: [{ name: String, amount: Number }],
     expenseEntries: [{ name: String, amount: Number }],
+    cashBankDeposit: { type: Number, default: 0 },
     note500: { type: Number, default: 0 },
     note200: { type: Number, default: 0 },
     note100: { type: Number, default: 0 },
@@ -270,28 +269,28 @@ const oilStockSchema = new mongoose.Schema({
 
 const OilStock = mongoose.model('OilStock', oilStockSchema);
 
-const defaultReadingSchema = new mongoose.Schema({
-    // Store Petrol readings
-    p1: { type: Number, default: 0 },
-    p2: { type: Number, default: 0 },
-    p3: { type: Number, default: 0 },
-    p4: { type: Number, default: 0 }, // New
-    p5: { type: Number, default: 0 }, // New
-    p6: { type: Number, default: 0 }, // New
+// const defaultReadingSchema = new mongoose.Schema({
+//     // Store Petrol readings
+//     p1: { type: Number, default: 0 },
+//     p2: { type: Number, default: 0 },
+//     p3: { type: Number, default: 0 },
+//     p4: { type: Number, default: 0 }, // New
+//     p5: { type: Number, default: 0 }, // New
+//     p6: { type: Number, default: 0 }, // New
     
-    // Store Diesel readings
-    d1: { type: Number, default: 0 },
-    d2: { type: Number, default: 0 },
-    d3: { type: Number, default: 0 },
-    d4: { type: Number, default: 0 }, // New
-    d5: { type: Number, default: 0 }, // New
-    d6: { type: Number, default: 0 },  // New
-    s1: { type: Number, default: 0 },
-    s2: { type: Number, default: 0 },
-    s3: { type: Number, default: 0 }
-});
+//     // Store Diesel readings
+//     d1: { type: Number, default: 0 },
+//     d2: { type: Number, default: 0 },
+//     d3: { type: Number, default: 0 },
+//     d4: { type: Number, default: 0 }, // New
+//     d5: { type: Number, default: 0 }, // New
+//     d6: { type: Number, default: 0 },  // New
+//     s1: { type: Number, default: 0 },
+//     s2: { type: Number, default: 0 },
+//     s3: { type: Number, default: 0 }
+// });
 
-const DefaultReading = mongoose.model('DefaultReading', defaultReadingSchema);
+// const DefaultReading = mongoose.model('DefaultReading', defaultReadingSchema);
 
 // NEW: Schema for Party
 const partySchema = new mongoose.Schema({
@@ -579,30 +578,23 @@ app.delete('/api/staff/:staffId', async (req, res) => {
 app.get('/api/reports/staff-denominations', async (req, res) => {
     try {
         const { fromDate, toDate, staff } = req.query;
-        
-        let query = {
-            currentDate: { $gte: fromDate, $lte: toDate }
-        };
+        let query = { currentDate: { $gte: fromDate, $lte: toDate } };
 
-        // Filter by staffId if a specific staff is selected
-        if (staff && staff !== "") {
-            query.selectedId = staff;
-        }
+        if (staff && staff !== "") { query.selectedId = staff; }
 
         const readings = await Reading.find(query).sort({ currentDate: -1 });
         const staffList = await Staff.find({});
         
-        // Map readings to include staff names and group by date
         const reportData = readings.map(reading => {
             const staffInfo = staffList.find(s => s.staffId === reading.selectedId);
             return {
                 date: reading.currentDate,
                 name: staffInfo ? staffInfo.name : `Unknown (${reading.selectedId})`,
-                totalDenomination: Number(reading.totalDenomination || 0)
+                totalDenomination: Number(reading.totalDenomination || 0),
+                cashBankDeposit: Number(reading.cashBankDeposit || 0) // ADD THIS LINE
             };
         });
 
-        // Group by date for the frontend (similar to view_transactions logic)
         const grouped = reportData.reduce((acc, curr) => {
             if (!acc[curr.date]) acc[curr.date] = [];
             acc[curr.date].push(curr);
@@ -617,39 +609,48 @@ app.get('/api/reports/staff-denominations', async (req, res) => {
 
 app.get('/api/reports/creditor-summary', async (req, res) => {
     try {
-        const readings = await Reading.find({}).select('creditEntries debitEntries');
+        // 1. Include 'debitBankEntries' in the selection
+        const readings = await Reading.find({}).select('creditEntries debitEntries debitBankEntries');
         const summary = {};
 
         readings.forEach(reading => {
-            // Process Credits
-            if (reading.creditEntries) {
-                reading.creditEntries.forEach(entry => {
-                    const name = entry.name.trim();
-                    if (!summary[name]) summary[name] = { credits: 0, debits: 0 };
-                    summary[name].credits += Number(entry.amount || 0);
-                });
-            }
-            // Process Debits
-            if (reading.debitEntries) {
-                reading.debitEntries.forEach(entry => {
-                    const name = entry.name.trim();
-                    if (!summary[name]) summary[name] = { credits: 0, debits: 0 };
-                    summary[name].debits += Number(entry.amount || 0);
-                });
-            }
+            // Helper to initialize and process entries
+            const process = (entries, type) => {
+                if (entries && Array.isArray(entries)) {
+                    entries.forEach(entry => {
+                        const name = entry.name.trim();
+                        if (!summary[name]) {
+                            summary[name] = { credits: 0, debits: 0, bank: 0 };
+                        }
+                        
+                        // Map specific types to the correct summary key
+                        if (type === 'credit') summary[name].credits += Number(entry.amount || 0);
+                        if (type === 'debit') summary[name].debits += Number(entry.amount || 0);
+                        if (type === 'bank') summary[name].bank += Number(entry.amount || 0);
+                    });
+                }
+            };
+
+            process(reading.creditEntries, 'credit');
+            process(reading.debitEntries, 'debit');
+            process(reading.debitBankEntries, 'bank'); // Process the new array
         });
 
-        // Convert object to array and calculate pending balance
+        // 2. Convert to array and apply the specific formula
         const report = Object.keys(summary).map(name => {
             const totalCr = summary[name].credits;
             const totalDr = summary[name].debits;
+            const totalBank = summary[name].bank;
+            
             return {
                 name: name,
                 totalCredits: totalCr.toFixed(2),
                 totalDebits: totalDr.toFixed(2),
-                pendingBalance: (totalCr - totalDr).toFixed(2)
+                totalDebitBank: totalBank.toFixed(2),
+                // FORMULA: totalCredit - totalDebit - totaldebitbank
+                pendingBalance: (totalCr - totalDr - totalBank).toFixed(2)
             };
-        }).filter(item => item.name !== ""); // Remove empty names
+        }).filter(item => item.name !== "");
 
         // Sort by highest pending balance
         report.sort((a, b) => b.pendingBalance - a.pendingBalance);
@@ -812,8 +813,8 @@ app.get('/api/transactions/creditDebit', async (req, res) => {
             query.selectedId = staffId;
         }
 
-        // UPDATED: Added 'expenseEntries' to the .select() method
-        let readingsQuery = Reading.find(query).select('currentDate creditEntries debitEntries expenseEntries selectedId');
+        // UPDATED: Added 'debitBankEntries' to the .select() method
+        let readingsQuery = Reading.find(query).select('currentDate creditEntries debitEntries expenseEntries debitBankEntries selectedId');
 
         const readings = await readingsQuery;
         const transactionsByDate = {};
@@ -825,6 +826,7 @@ app.get('/api/transactions/creditDebit', async (req, res) => {
             let filteredCredits = [];
             let filteredDebits = [];
             let filteredExpenses = [];
+            let filteredBank = []; // NEW: Initialize Bank filter
 
             // Filter Credits
             if (reading.creditEntries && reading.creditEntries.length > 0) {
@@ -833,28 +835,35 @@ app.get('/api/transactions/creditDebit', async (req, res) => {
                 });
             }
 
-            // Filter Debits
+            // Filter Debits (Credit Returns)
             if (reading.debitEntries && reading.debitEntries.length > 0) {
                 filteredDebits = reading.debitEntries.filter(entry => {
                     return !partyName || entry.name.toLowerCase().includes(partyName.toLowerCase());
                 });
             }
 
-            // ADDED: Filter Expense Entries
+            // Filter Expense Entries
             if (reading.expenseEntries && reading.expenseEntries.length > 0) {
                 filteredExpenses = reading.expenseEntries.filter(entry => {
-                    // Filter by party name if a search is active, otherwise include all
                     return !partyName || (entry.name && entry.name.toLowerCase().includes(partyName.toLowerCase()));
                 });
             }
 
-            // UPDATED: Include filteredExpenses in the check
-            if (filteredCredits.length > 0 || filteredDebits.length > 0 || filteredExpenses.length > 0) {
+            // NEW: Filter Debit Bank Entries
+            if (reading.debitBankEntries && reading.debitBankEntries.length > 0) {
+                filteredBank = reading.debitBankEntries.filter(entry => {
+                    return !partyName || (entry.name && entry.name.toLowerCase().includes(partyName.toLowerCase()));
+                });
+            }
+
+            // UPDATED: Include filteredBank in the check
+            if (filteredCredits.length > 0 || filteredDebits.length > 0 || filteredExpenses.length > 0 || filteredBank.length > 0) {
                 if (!transactionsByDate[date]) {
                     transactionsByDate[date] = {
                         credits: [],
                         debits: [],
-                        expenseEntries: [] // Initialize array
+                        expenseEntries: [],
+                        debitBankEntries: [] // Initialize array
                     };
                 }
 
@@ -866,9 +875,13 @@ app.get('/api/transactions/creditDebit', async (req, res) => {
                     transactionsByDate[date].debits.push({ ...entry._doc, staffId: staff });
                 });
 
-                // ADDED: Push expenses to the date group
                 filteredExpenses.forEach(entry => {
                     transactionsByDate[date].expenseEntries.push({ ...entry._doc, staffId: staff });
+                });
+
+                // NEW: Push bank entries to the date group
+                filteredBank.forEach(entry => {
+                    transactionsByDate[date].debitBankEntries.push({ ...entry._doc, staffId: staff });
                 });
             }
         });
@@ -925,16 +938,6 @@ app.post('/api/saveReading', async (req, res) => {
                 );
             }
         }
-
-        // 5. AUTOMATIC UPDATE (Second Reading -> Next First Reading)
-        await DefaultReading.findOneAndUpdate({}, {
-            p1: data.secondReading1, p2: data.secondReading2, p3: data.secondReading3,
-            p4: data.secondReading4, p5: data.secondReading5, p6: data.secondReading6,
-            d1: data.dieselSecondReading1, d2: data.dieselSecondReading2, d3: data.dieselSecondReading3,
-            d4: data.dieselSecondReading4, d5: data.dieselSecondReading5, d6: data.dieselSecondReading6,
-            s1: data.speedSecondReading1, s2: data.speedSecondReading2, s3: data.speedSecondReading3
-        }, { upsert: true });
-
         // 6. FINAL RESPONSE
         res.status(201).json(savedReading);
 
@@ -1164,41 +1167,6 @@ app.put('/api/reading/:id', async (req, res) => {
     }
 });
      
- app.get('/api/defaults', async (req, res) => {
-    try {
-        let defaults = await DefaultReading.findOne();
-        if (!defaults) {
-            defaults = await DefaultReading.create({ p1:0, p2:0, p3:0, d1:0, d2:0, d3:0 });
-        }
-        res.status(200).json(defaults);
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching defaults' });
-    }
-});
-
-// Add this to your Express routes
-app.post('/api/updateDefaults', async (req, res) => {
-    try {
-        const newReadings = req.body;
-        
-        // Update your 'Defaults' collection in MongoDB
-        // Using { upsert: true } ensures it creates the document if it doesn't exist
-        await DefaultReading.updateOne({}, newReadings, { upsert: true });
-        
-        res.status(200).json({ message: 'Success' });
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to update defaults' });
-    }
-});
-
-app.put('/api/defaults/update', async (req, res) => {
-    try {
-        const updated = await DefaultReading.findOneAndUpdate({}, req.body, { upsert: true, new: true });
-        res.status(200).json(updated);
-    } catch (error) {
-        res.status(500).json({ message: 'Error updating defaults' });
-    }
-});
 
 // NEW: API Endpoint to get current prices
 app.get('/api/prices/current', async (req, res) => {
@@ -1283,6 +1251,6 @@ app.put('/api/oilStock/:id', async (req, res) => {
 });
 
 // Start the server
-app.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
+app.listen(port, '0.0.0.0', () => {
+    console.log(`Server running on port ${port}`);
 });

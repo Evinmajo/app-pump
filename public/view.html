@@ -440,7 +440,21 @@
                            readonly placeholder="-" tabindex="-1">
                 </div>
             </div>
+            
+            
         </div>
+        <div class="mt-8">
+    <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Debit Bank (Online Payments)</h2>
+    <div id="debitBankEntriesContainer" class="space-y-3">
+        </div>
+    <div class="mt-4">
+        <label for="totalDebitBank" class="block text-lg font-semibold text-gray-700 mb-2 text-center">Total Debit Bank</label>
+        <input type="text" id="totalDebitBank"
+               class="w-full p-3 border border-gray-300 rounded-lg bg-blue-50 text-blue-800 text-center font-bold"
+               readonly placeholder="-" tabindex="-1">
+    </div>
+</div>
+
         <hr class="my-8 border-t border-gray-300">
 
         <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Expenses</h2>
@@ -454,9 +468,16 @@
         </div>
 
         <hr class="my-8 border-t border-gray-300">
+        <div class="grid grid-cols-1 mt-8">
+            <div>
+                <label for="cashBankDeposit" class="block text-lg font-semibold text-gray-700 mb-2 text-center">Cash Bank Deposit</label>
+                <input type="text" id="cashBankDeposit"
+                       class="w-full p-3 border border-gray-300 rounded-lg bg-yellow-100 text-yellow-800 text-center font-bold text-lg"
+                       readonly placeholder="-" tabindex="-1">
+            </div>
+        </div>
 
-
-
+<hr class="my-8 border-t border-gray-300">
         <div class="grid grid-cols-1 mt-8">
             <div class="col-span-1">
                 <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Denomination Calculator</h2>
@@ -752,6 +773,39 @@
             setOutputValue('requiredMoneyPetrol', requiredMoneyPetrol);
             setOutputValue('requiredMoneySpeed', requiredMoneySpeed); // Update the speed money display
         }
+        function addDebitBankEntry(name, amount) {
+            const container = document.getElementById('debitBankEntriesContainer');
+            if (!container) return;
+        
+            const entryDiv = document.createElement('div');
+            entryDiv.className = 'flex items-center gap-x-2 mb-3';
+        
+            const nameInput = document.createElement('input');
+            nameInput.type = 'text';
+            nameInput.value = name;
+            nameInput.className = 'w-1/2 p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-800 text-center';
+            nameInput.readOnly = true;
+            nameInput.tabIndex = -1;
+        
+            const amountInput = document.createElement('input');
+            amountInput.type = 'number';
+            amountInput.value = amount;
+            amountInput.className = 'w-1/2 p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-800 text-center debit-bank-amount';
+            amountInput.readOnly = true;
+            amountInput.tabIndex = -1;
+        
+            entryDiv.appendChild(nameInput);
+            entryDiv.appendChild(amountInput);
+            container.appendChild(entryDiv);
+        }
+        function calculateTotalDebitBank() {
+            let total = 0;
+            document.querySelectorAll('.debit-bank-amount').forEach(input => {
+                total += parseFloat(input.value) || 0;
+            });
+            setOutputValue('totalDebitBank', total);
+            return total;
+        }
         function addExpenseEntry(name, amount) {
             const container = document.getElementById('expenseEntriesContainer');
             const entryDiv = document.createElement('div');
@@ -920,7 +974,7 @@
                                 'dieselFirstReading1', 'dieselFirstReading2', 'dieselFirstReading3',
                                 'dieselFirstReading4', 'dieselFirstReading5', 'dieselFirstReading6',
                                 'dieselSecondReading1', 'dieselSecondReading2', 'dieselSecondReading3','dieselSecondReading4', 'dieselSecondReading5', 'dieselSecondReading6',
-                                'petrolTestQuantity', 'dieselTestQuantity','speedTestQuantity',
+                                'petrolTestQuantity', 'dieselTestQuantity','speedTestQuantity','cashBankDeposit',
                                 'note500', 'note200', 'note100', 'note50', 'note20', 'note10', 'note5', 'coins','totalDenomination'
                             ];
 
@@ -953,6 +1007,11 @@
                             if (fetchedData.debitEntries && Array.isArray(fetchedData.debitEntries)) {
                                 fetchedData.debitEntries.forEach(entry => {
                                     addDynamicEntry('debit', entry.name, entry.amount);
+                                });
+                            }
+                            if (fetchedData.debitBankEntries && Array.isArray(fetchedData.debitBankEntries)) {
+                                fetchedData.debitBankEntries.forEach(entry => {
+                                    addDebitBankEntry(entry.name, entry.amount);
                                 });
                             }
 
@@ -1001,6 +1060,7 @@
             calculateDenominations();
             calculateFinalResult(); // Now uses the new total fields
             calculateExcessShot();
+            calculateTotalDebitBank();
         }
 
         // Initial calculations on page load
