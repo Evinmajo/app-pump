@@ -321,38 +321,35 @@
                 </div>
             </div>
 
-            <hr class="my-8 border-t border-gray-300">
+           <hr class="my-8 border-t border-gray-300">
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                <div class="col-span-1">
-                    <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Credit Entries</h2>
-                    <div id="creditEntriesContainer" class="space-y-3">
-                        </div>
-                    <div class="mt-4 flex space-x-2">
-                        <button type="button" onclick="addDynamicEntry('credit')" class="px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-bold">Add Credit</button>
-                    </div>
-                </div>
-
-                <div class="col-span-1">
-                    <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Debit Entries</h2>
-                    <div id="debitEntriesContainer" class="space-y-3">
-                        </div>
-                    <div class="mt-4 flex space-x-2">
-                        <button type="button" onclick="addDynamicEntry('debit')" class="px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-bold">Add Debit</button>
-                    </div>
-                </div>
-            </div>
-            <hr class="my-8 border-t border-gray-300">
-            <div class="col-span-1 md:col-span-2 mt-8">
-    <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Debit Bank (Online Payments)</h2>
-    <div id="debitBankEntriesContainer" class="space-y-3">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+    
+    <div class="col-span-1 md:col-span-2">
+        <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Credit Entries</h2>
+        <div id="creditEntriesContainer" class="space-y-3"></div>
+        <div class="mt-4 flex justify-center"> <button type="button" onclick="addDynamicEntry('credit')" class="px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-bold">Add Credit</button>
         </div>
-    <div class="mt-4 flex justify-center">
-        <button type="button" onclick="addDynamicEntry('bank')" class="px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-bold">Add Bank Entry</button>
+        <hr class="mt-8 border-t border-gray-200"> </div>
+
+    <div class="col-span-1">
+        <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Credit Return Entries</h2>
+        <div id="debitEntriesContainer" class="space-y-3"></div>
+        <div class="mt-4 flex space-x-2">
+            <button type="button" onclick="addDynamicEntry('debit')" class="px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-bold">Add Credit Return</button>
+        </div>
+    </div>
+
+    <div class="col-span-1">
+        <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Credit Return Bank (Online Payments)</h2>
+        <div id="debitBankEntriesContainer" class="space-y-3"></div>
+        <div class="mt-4 flex space-x-2">
+            <button type="button" onclick="addDynamicEntry('bank')" class="px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-bold">Add Credit Return Entry</button>
+        </div>
     </div>
 </div>
 
-            <hr class="my-8 border-t border-gray-300">
+<hr class="my-8 border-t border-gray-300">
 
             <!-- <div class="grid grid-cols-1 mt-8">
                 <div class="col-span-1">
