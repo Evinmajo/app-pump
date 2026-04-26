@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Transactions & Expenses</title>
+    <link rel="icon" type="image/png" href="https://img-cdn.publive.online/fit-in/1200x675/jobs-sentinalassam/media/media_files/2025/07/26/bharat-petroleum-corporation-limited-2025-07-26-15-38-59.jpg">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <script src="./style.js"></script>
+    <style>
+    body { font-family: 'Roboto', sans-serif; }
+    
+    .date-block, .transaction-row {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    /* Print-specific overrides */
+    @media print { 
+        .no-print { display: none !important; }
+        body { background: white !important; p: 0; margin: 0; }
+        #printableArea { 
+            box-shadow: none !important; 
+            border: none !important; 
+            width: 100% !important; 
+            max-width: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        #transactionsDisplay {
+            border: none !important;
+        }
+    }
+</style>
+</head>
+<body class="bg-[#eef2f7] min-h-screen flex flex-col items-center p-2.5 md:p-5">
+
+    <div id="printableArea" class="bg-white p-5 md:p-8 rounded-xl shadow-lg border border-gray-200 max-w-[1000px] w-full mb-5 box-border">
+        <h1 class="text-center text-[#2c3e50] mb-6 text-2xl md:text-4xl font-bold">Transaction Explorer</h1>
+        
+        <div class="no-print flex flex-wrap gap-3 mb-5 justify-center items-end">
+            <div class="flex flex-col min-w-[140px] flex-1">
+                <label for="fromDate" class="text-xs text-gray-600 mb-1 font-bold">From Date:</label>
+                <input type="date" id="fromDate" class="p-2.5 border border-gray-300 rounded-lg text-base w-full">
+            </div>
+            
+            <div class="flex flex-col min-w-[140px] flex-1">
+                <label for="toDate" class="text-xs text-gray-600 mb-1 font-bold">To Date:</label>
+                <input type="date" id="toDate" class="p-2.5 border border-gray-300 rounded-lg text-base w-full">
+            </div>
+
+            <div class="flex flex-col min-w-[140px] flex-1">
+                <label for="staffSelect" class="text-xs text-gray-600 mb-1 font-bold">Staff:</label>
+                <select id="staffSelect" class="p-2.5 border border-gray-300 rounded-lg text-base w-full">
+                    <option value="">All Staff</option>
+                </select>
+            </div>
+
+            <div class="flex flex-col min-w-[140px] flex-1">
+                <label for="typeSelect" class="text-xs text-gray-600 mb-1 font-bold">Type:</label>
+                <select id="typeSelect" class="p-2.5 border border-gray-300 rounded-lg text-base w-full">
+                    <option value="all">All (Cr/Cr Ret/Bank)</option> 
+                    <option value="credit">Credits Only</option>
+                    <option value="debit">Credit Return Only</option>
+                    <option value="debitbank">Credit Return Bank Only</option> 
+                    <option value="expense">Expenses Only</option>
+                    <option value="expensebank">Expenses Bank Only</option> 
+                </select>
+            </div>
+
+            <div class="flex flex-col w-full md:flex-[2] md:min-w-[250px]">
+                <label for="searchInput" class="text-xs text-gray-600 mb-1 font-bold">Search Party Name:</label>
+                <input type="text" id="searchInput" placeholder="Search..." onkeyup="fetchTransactions()" class="p-2.5 border border-gray-300 rounded-lg text-base w-full">
+            </div>
+
+            <div class="flex gap-2 w-full md:w-auto">
+                <button id="filterButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors flex-1 h-[60px]">
+                    Refresh
+                </button>
+                <button onclick="downloadPDF()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors flex-1 h-[70px]">
+                    Save PDF
+                </button>
+            </div>
+        </div>
+
+        <div id="transactionsDisplay" class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 w-full box-border">
+            <p class="text-center text-gray-500 italic py-5">Select dates to view records.</p>
+        </div>
+
+        <div id="transactionSummary" class="hidden bg-gray-200 p-5 rounded-lg mt-5 text-center font-bold text-gray-800 leading-relaxed text-base md:text-lg w-full box-border">
+        </div>
+    </div>
+
+    <script>
+        const fromDateInput = document.getElementById('fromDate');
+        const toDateInput = document.getElementById('toDate');
+        const staffSelect = document.getElementById('staffSelect');
+        const typeSelect = document.getElementById('typeSelect');
+        const searchInput = document.getElementById('searchInput');
+        const filterButton = document.getElementById('filterButton');
+        const transactionsDisplay = document.getElementById('transactionsDisplay');
+        const transactionSummary = document.getElementById('transactionSummary');
+
+        async function populateStaffDropdown() {
+            try {
+                const response = await fetch('/api/staff');
+                if (!response.ok) throw new Error('Failed to fetch staff');
+                const staffList = await response.json();
+                staffList.forEach(staff => {
+                    const option = document.createElement('option');
+                    option.value = staff.staffId;
+                    option.textContent = staff.name;
+                    staffSelect.appendChild(option);
+                });
+            } catch (error) { console.error("Staff Error:", error); }
+        }
+
+        async function fetchTransactions() {
+    const fromDate = fromDateInput.value;
+    const toDate = toDateInput.value;
+    const staffId = staffSelect.value;
+    const filterType = typeSelect.value;
+    const searchTerm = searchInput.value.toLowerCase();
+
+    if (!fromDate || !toDate) return;
+
+    try {
+        const response = await fetch(`/api/transactions/creditDebit?fromDate=${fromDate}&toDate=${toDate}&staffId=${staffId}`);
+        if (!response.ok) throw new Error('Server Error');
+
+        const data = await response.json();
+        transactionsDisplay.innerHTML = "";
+        
+        // Initialize all totals
+        let totalCredit = 0, 
+            totalDebit = 0, 
+            totalDebitBank = 0, 
+            totalExpense = 0, 
+            totalExpenseBank = 0;
+        let hasAnyData = false;
+
+        for (const date in data) {
+            const dayData = data[date];
+            let dateHTML = `<div class="date-block mb-5 border border-gray-200 rounded-xl p-3 bg-gray-50/50">
+                            <h3 class="text-[#2c3e50] m-0 mb-3 text-lg md:text-xl border-b-2 border-gray-200 pb-2 font-bold">${date}</h3>`;
+            let hasDailyData = false;
+
+            const process = (entries, label) => {
+                if (!entries || !Array.isArray(entries)) return;
+                entries.forEach(entry => {
+                    const entryName = entry.name || 'Unnamed';
+                    
+                    // Logic for "All" filter to include Credits, Returns, and Bank entries
+                    const isAllType = filterType === 'all' && (label === 'Credit' || label === 'Debit' || label === 'Debit Bank');
+                    
+                    // Matches specific dropdown values (e.g., 'expensebank' matches 'Expense Bank')
+                    const isSpecificType = filterType === label.toLowerCase().replace(/\s/g, "");
+                    const matchesSearch = entryName.toLowerCase().includes(searchTerm);
+
+                    if ((isAllType || isSpecificType) && matchesSearch) {
+                        const amount = parseFloat(entry.amount) || 0;
+                        
+                        // Dynamic coloring based on transaction type
+                        let colorClass = "text-red-600"; // Default
+                        if (label === 'Credit') colorClass = "text-green-600";
+                        if (label === 'Debit Bank') colorClass = "text-blue-700"; 
+                        if (label === 'Expense') colorClass = "text-orange-500";
+                        if (label === 'Expense Bank') colorClass = "text-purple-600";
+
+                        dateHTML += `
+                            <div class="transaction-row flex justify-between items-center p-3 border-b border-dashed border-gray-200 cursor-pointer rounded-md hover:bg-blue-50 transition-colors text-sm md:text-base" onclick="quickSearch('${entryName.replace(/'/g, "\\'")}')">
+                                <span><strong>${entryName}</strong><br><small class="text-gray-500">(${label})</small></span>
+                                <span class="${colorClass} font-bold">₹${amount.toFixed(2)}</span>
+                            </div>`;
+                        
+                        // Accumulate totals based on label
+                        if (label === 'Credit') totalCredit += amount;
+                        if (label === 'Debit') totalDebit += amount;
+                        if (label === 'Debit Bank') totalDebitBank += amount;
+                        if (label === 'Expense') totalExpense += amount;
+                        if (label === 'Expense Bank') totalExpenseBank += amount;
+                        
+                        hasDailyData = true;
+                        hasAnyData = true;
+                    }
+                });
+            };
+
+            // Process all categories from the API response
+            process(dayData.credits, 'Credit');
+            process(dayData.debits, 'Debit');
+            process(dayData.debitBankEntries, 'Debit Bank');
+            process(dayData.expenseEntries, 'Expense');
+            process(dayData.expenseBankEntries, 'Expense Bank');
+
+            dateHTML += `</div>`;
+            if (hasDailyData) transactionsDisplay.innerHTML += dateHTML;
+        }
+
+        if (!hasAnyData) {
+            transactionsDisplay.innerHTML = '<p class="text-center text-gray-500 italic py-5">No matching records found.</p>';
+            transactionSummary.classList.add('hidden');
+            return;
+        }
+
+        transactionSummary.classList.remove('hidden');
+        // Pass all five totals to the summary function
+        updateSummary(filterType, totalCredit, totalDebit, totalDebitBank, totalExpense, totalExpenseBank);
+
+    } catch (error) {
+        console.error("Fetch Error:", error);
+        transactionsDisplay.innerHTML = `<p class="text-center text-red-600 py-5">Error fetching data.</p>`;
+    }
+}
+
+        function updateSummary(type, cr, dr, db, ex, exb) {
+    // cr = Total Credit
+    // dr = Total Credit Return (Cash)
+    // db = Total Credit Return (Bank)
+    // ex = Total Expenses (Cash)
+    // exb = Total Expenses (Bank)
+
+    if (type === 'all') {
+        // Net Total calculation (Credits minus all types of returns/bank payments)
+        const netTotal = cr - dr - db;
+        
+        transactionSummary.innerHTML = `
+            <div class="summary-grid grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                <div>Cr: <span class="font-bold">₹${cr.toFixed(2)}</span></div>
+                <div>Cr Ret (Cash): <span class="font-bold">₹${dr.toFixed(2)}</span></div>
+                <div>Cr Ret (Bank): <span class="font-bold">₹${db.toFixed(2)}</span></div>
+                <div>Exp (Bank): <span class="font-bold text-purple-600">₹${exb.toFixed(2)}</span></div>
+            </div>
+            <div class="mt-2 pt-2 border-t border-gray-300">
+                <span class="text-[#2c3e50] font-bold text-lg">Net Total: ₹${netTotal.toFixed(2)}</span>
+            </div>`;
+            
+    } else if (type === 'expensebank') {
+        transactionSummary.innerHTML = `
+            <div class="text-purple-600 font-bold text-lg">
+                Total Expenses (Bank): ₹${exb.toFixed(2)}
+            </div>`;
+            
+    } else if (type === 'expense') {
+        transactionSummary.innerHTML = `
+            <div class="text-orange-500 font-bold text-lg">
+                Total Expenses (Cash): ₹${ex.toFixed(2)}
+            </div>`;
+            
+    } else if (type === 'debitbank') {
+        transactionSummary.innerHTML = `
+            <div class="text-blue-700 font-bold text-lg">
+                Total Credit Return Bank: ₹${db.toFixed(2)}
+            </div>`;
+            
+    } else if (type === 'credit') {
+        transactionSummary.innerHTML = `
+            <div class="text-green-600 font-bold text-lg">
+                Total Credits: ₹${cr.toFixed(2)}
+            </div>`;
+            
+    } else if (type === 'debit') {
+        transactionSummary.innerHTML = `
+            <div class="text-red-600 font-bold text-lg">
+                Total Credit Returns (Cash): ₹${dr.toFixed(2)}
+            </div>`;
+    }
+}
+
+        function downloadPDF() {
+            const element = document.getElementById('printableArea');
+            const opt = {
+                margin:       [10, 10, 10, 10],
+                filename:     `Transactions_${fromDateInput.value}_to_${toDateInput.value}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            const filters = document.querySelector('.no-print');
+            filters.style.display = 'none'; // Hide UI buttons in PDF
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                filters.style.display = 'flex'; // Bring buttons back
+            });
+        }
+
+        function quickSearch(name) {
+            searchInput.value = name;
+            fetchTransactions();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        filterButton.addEventListener('click', fetchTransactions);
+        typeSelect.addEventListener('change', fetchTransactions);
+        staffSelect.addEventListener('change', fetchTransactions);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            populateStaffDropdown();
+            const today = new Date();
+            fromDateInput.value = new Date(today.setDate(today.getDate() - 7)).toISOString().split('T')[0];
+            toDateInput.value = new Date().toISOString().split('T')[0];
+            fetchTransactions();
+        });
+    </script>
+</body>
+</html>

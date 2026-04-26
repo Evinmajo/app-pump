@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tank Stock Management</title>
+    <script src="./style.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-8 text-center">Tank Inventory & Loss Management</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="bg-white p-6 rounded-xl shadow-sm border-t-4 border-red-500 text-center">
+                <h3 class="text-gray-500 text-sm font-semibold uppercase">Petrol Stock</h3>
+                <h2 id="p-val" class="text-3xl font-bold text-gray-800 mt-2">0 L</h2>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border-t-4 border-gray-800 text-center">
+                <h3 class="text-gray-500 text-sm font-semibold uppercase">Diesel Stock</h3>
+                <h2 id="d-val" class="text-3xl font-bold text-gray-800 mt-2">0 L</h2>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border-t-4 border-yellow-500 text-center">
+                <h3 class="text-gray-500 text-sm font-semibold uppercase">Speed Stock</h3>
+                <h2 id="s-val" class="text-3xl font-bold text-gray-800 mt-2">0 L</h2>
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-emerald-500">
+                <h3 class="text-lg font-bold mb-4">Manual Stock Adjustment</h3>
+                <div class="flex flex-wrap gap-3">
+                    <input type="date" id="mDate" class="flex-1 min-w-[150px] p-2 border rounded-md">
+                    <select id="mType" class="flex-1 min-w-[150px] p-2 border rounded-md">
+                        <option>Petrol</option><option>Diesel</option><option>Speed</option>
+                    </select>
+                    <select id="mAction" class="flex-1 min-w-[150px] p-2 border rounded-md">
+                        <option value="Increase">Increase (+)</option>
+                        <option value="Decrease">Decrease (-)</option>
+                    </select>
+                    <input type="number" id="mQty" placeholder="Liters" class="flex-1 min-w-[150px] p-2 border rounded-md">
+                    <button onclick="submitManualAdjust()" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-md transition">Submit</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-600">
+                    <h3 class="text-lg font-bold mb-4">Add Tank Loading</h3>
+                    <div class="grid grid-cols-1 gap-3">
+                        <input type="date" id="lDate" class="p-2 border rounded-md">
+                        <select id="lType" class="p-2 border rounded-md"><option>Petrol</option><option>Diesel</option><option>Speed</option></select>
+                        <input type="number" id="lQty" placeholder="Liters Added" class="p-2 border rounded-md">
+                        <button onclick="submitLoad()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-md transition">Update Stock</button>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-400">
+                    <h3 class="text-lg font-bold mb-4">Automation Check (Loss)</h3>
+                    <div class="grid grid-cols-1 gap-3">
+                        <input type="date" id="cDate" class="p-2 border rounded-md">
+                        <select id="cType" class="p-2 border rounded-md"><option>Petrol</option><option>Diesel</option><option>Speed</option></select>
+                        <input type="number" id="cQty" placeholder="Automation Liters" class="p-2 border rounded-md">
+                        <button onclick="submitCheck()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded-md transition">Check Loss</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-indigo-500">
+                <h3 class="text-lg font-bold mb-4 text-indigo-700">Filter History</h3>
+                <div class="flex flex-wrap gap-3 items-center">
+                    <span class="text-sm text-gray-600">From:</span>
+                    <input type="date" id="filterFrom" class="p-2 border rounded-md">
+                    <span class="text-sm text-gray-600">To:</span>
+                    <input type="date" id="filterTo" class="p-2 border rounded-md">
+                    <button onclick="loadData()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md">Apply</button>
+                    <button onclick="resetFilter()" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-md">Reset</button>
+                </div>
+            </div>
+
+            <div class="mt-8">
+                <h3 class="text-xl font-bold mb-4 text-gray-800">History Reports</h3>
+                <div class="overflow-x-auto bg-white rounded-xl shadow-sm">
+                    <table class="min-w-full text-left">
+                        <thead class="bg-gray-50 border-b">
+                            <tr>
+                                <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Date</th>
+                                <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Fuel</th>
+                                <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Event</th>
+                                <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Qty</th>
+                                <th class="px-6 py-3 text-xs font-bold text-red-600 uppercase">Petrol Stock</th>
+                                <th class="px-6 py-3 text-xs font-bold text-gray-800 uppercase">Diesel Stock</th>
+                                <th class="px-6 py-3 text-xs font-bold text-yellow-600 uppercase">Speed Stock</th>
+                                <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase text-red-600">Loss</th>
+                                <th class="px-6 py-3 text-xs font-bold text-gray-500 uppercase">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyBody" class="divide-y divide-gray-200">
+                            </tbody>
+                        <tfoot class="bg-gray-50 font-bold">
+                            <tr>
+                                <td colspan="4" class="px-6 py-4 text-right">Total Evaporation Loss:</td>
+                                <td id="totalLossDisplay" class="px-6 py-4 text-red-600">0.00 L</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    async function loadData() {
+        // 1. Update Top Dashboard Cards
+        const sRes = await fetch('/api/tanks/stock');
+        const stocks = await sRes.json();
+        stocks.forEach(s => {
+            const el = document.getElementById(s.fuelType[0].toLowerCase() + '-val');
+            if(el) el.innerText = s.currentLiters.toFixed(2) + ' L';
+        });
+
+        // 2. Fetch History Data
+        const hRes = await fetch('/api/tanks/history');
+        let history = await hRes.json();
+
+        // 3. Apply Date Filters
+        const fromDate = document.getElementById('filterFrom').value;
+        const toDate = document.getElementById('filterTo').value;
+
+        if (fromDate || toDate) {
+            history = history.filter(h => {
+                if (fromDate && h.date < fromDate) return false;
+                if (toDate && h.date > toDate) return false;
+                return true;
+            });
+        }
+
+        // 4. Populate Table Body
+        const tbody = document.getElementById('historyBody');
+        tbody.innerHTML = '';
+        let totalLoss = 0;
+
+        history.forEach(h => {
+            const lossValue = h.type === 'AutomationCheck' ? (h.loss || 0) : 0;
+            totalLoss += lossValue;
+
+            // Handle fallback for older records that don't have snapshot data
+            const pStock = h.pStock != null ? h.pStock.toFixed(2) + ' L' : '-';
+            const dStock = h.dStock != null ? h.dStock.toFixed(2) + ' L' : '-';
+            const sStock = h.sStock != null ? h.sStock.toFixed(2) + ' L' : '-';
+
+            tbody.innerHTML += `
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-4 text-sm text-gray-700">${h.date}</td>
+                    <td class="px-6 py-4 text-sm font-semibold">${h.fuelType}</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">
+                        ${h.type === 'Load' ? (h.liters > 0 ? 'Stock Added' : 'Manual Reduction') : 
+                          h.type === 'Adjustment' ? 'Manual Adjustment' : 'Automation Check'}
+                    </td>
+                    <td class="px-6 py-4 text-sm font-mono text-blue-600">${h.liters.toFixed(2)} L</td>
+                    
+                    <td class="px-6 py-4 text-sm font-mono text-red-600 bg-red-50/20">${pStock}</td>
+                    <td class="px-6 py-4 text-sm font-mono text-gray-800 bg-gray-50/50">${dStock}</td>
+                    <td class="px-6 py-4 text-sm font-mono text-orange-600 bg-orange-50/20">${sStock}</td>
+                    
+                    <td class="px-6 py-4 text-sm font-bold text-red-600">
+                        ${h.type === 'AutomationCheck' ? h.loss.toFixed(2) + ' L' : '-'}
+                    </td>
+                    <td class="px-6 py-4">
+                        <button onclick="deleteHistory('${h._id}')" class="bg-red-100 text-red-600 hover:bg-red-600 hover:text-white px-3 py-1 rounded text-xs transition">Delete</button>
+                    </td>
+                </tr>`;
+        });
+
+        document.getElementById('totalLossDisplay').innerText = totalLoss.toFixed(2) + ' L';
+    }
+
+    // --- Submission Functions ---
+
+    async function submitManualAdjust() {
+        const body = { 
+            date: document.getElementById('mDate').value, 
+            fuelType: document.getElementById('mType').value, 
+            type: document.getElementById('mAction').value, 
+            amount: document.getElementById('mQty').value 
+        };
+        
+        if(!body.amount || !body.date) return alert("Please fill all fields");
+
+        try {
+            const response = await fetch('/api/tanks/manual-adjust', { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify(body) 
+            });
+            if (response.ok) { loadData(); alert("Stock adjusted!"); }
+        } catch (err) { alert("Error connecting to server."); }
+    }
+
+    async function submitLoad() {
+        const fuel = document.getElementById('lType').value;
+        const body = { 
+            date: document.getElementById('lDate').value, 
+            fuelType: fuel, 
+            amount: document.getElementById('lQty').value 
+        };
+
+        if(!body.amount || !body.date) return alert("Please fill all fields");
+
+        try {
+            const response = await fetch('/api/tanks/load', { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify(body) 
+            });
+            if (response.ok) { loadData(); alert("Loading successful!"); }
+        } catch (err) { alert("Error connecting to server."); }
+    }
+
+    async function submitCheck() {
+        const fuel = document.getElementById('cType').value;
+        const body = { 
+            date: document.getElementById('cDate').value, 
+            fuelType: fuel, 
+            automationLiters: document.getElementById('cQty').value 
+        };
+
+        if(!body.automationLiters || !body.date) return alert("Please fill all fields");
+
+        try {
+            const response = await fetch('/api/tanks/check-loss', { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify(body) 
+            });
+            if (response.ok) { loadData(); alert("Loss check complete!"); }
+        } catch (err) { alert("Error connecting to server."); }
+    }
+
+    async function deleteHistory(id) {
+        if(confirm("Confirm deletion of this record?")) {
+            await fetch(`/api/tanks/history/${id}`, { method: 'DELETE' });
+            loadData();
+        }
+    }
+
+    function resetFilter() {
+        document.getElementById('filterFrom').value = '';
+        document.getElementById('filterTo').value = '';
+        loadData();
+    }
+
+    // Initialization
+    document.getElementById('lDate').valueAsDate = new Date();
+    document.getElementById('cDate').valueAsDate = new Date();
+    document.getElementById('mDate').valueAsDate = new Date();
+    loadData();
+</script>
+</body>
+</html>

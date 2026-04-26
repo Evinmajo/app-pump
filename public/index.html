@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reading Difference Calculator - Input</title>
+    <link rel="icon" type="image/png" href="https://img-cdn.publive.online/fit-in/1200x675/jobs-sentinalassam/media/media_files/2025/07/26/bharat-petroleum-corporation-limited-2025-07-26-15-38-59.jpg">
+    <script src="./style.js"></script>
+    <style>
+        /* Custom styles for the Inter font and overall body */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #2563eb; 
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            min-height: 100vh; 
+            display: flex;
+            justify-content: center; 
+            align-items: center; 
+        }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield; 
+        }
+
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); 
+            z-index: 1000;
+            text-align: center;
+            max-width: 90%; 
+        }
+        .message-box-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="bg-white p-6 sm:p-8 md:p-10 rounded-xl shadow-lg w-11/12 max-w-xl md:max-w-2xl lg:max-w-3xl mx-auto my-auto">
+
+        <div class="mb-8">
+            <label for="currentDate" class="block text-lg font-semibold text-gray-700 mb-2 text-center">Date</label>
+            <input type="date" id="currentDate"
+                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center">
+        </div>
+
+        <div class="mb-8">
+            <label for="selectedId" class="block text-lg font-semibold text-gray-700 mb-2 text-center">Select Staff</label>
+            <select id="selectedId"
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center">
+                <option value="">--Select Staff--</option>
+                </select>
+        </div>
+
+        <div class="mb-8">
+            <label for="shift" class="block text-lg font-semibold text-gray-700 mb-2 text-center">Shift</label>
+            <select id="shift" name="shift"
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center">
+                <option value="">--Select Shift--</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+            </select>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
+            <div>
+                <label for="petrol" class="block text-lg font-semibold text-gray-700 mb-2 text-center">Petrol Price</label>
+                <input type="number" id="petrol"
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center"
+                       placeholder="Loading..." readonly> 
+            </div>
+            <div>
+                <label for="diesel" class="block text-lg font-semibold text-gray-700 mb-2 text-center">Diesel Price</label>
+                <input type="number" id="diesel"
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center"
+                       placeholder="Loading..." readonly> 
+            </div>
+            <div>
+                <label for="oil" class="block text-lg font-semibold text-gray-700 mb-2 text-center">Oil Price</label>
+                <input type="number" id="oil"
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center"
+                       placeholder="Loading..." readonly> 
+            </div>
+            <div>
+                <label for="speed" class="block text-lg font-semibold text-gray-700 mb-2 text-center">Speed Price</label>
+                <input type="number" id="speed"
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 shadow-sm text-gray-800 text-center"
+                       placeholder="Loading..." readonly> 
+            </div>
+        </div>
+
+        <hr class="my-8 border-t border-gray-300">
+        <div class="mb-6">
+            <h2 class="block text-lg sm:text-xl font-semibold text-gray-700 mb-2 text-left">Oil First Reading</h2>
+            <div class="flex flex-row gap-x-2 w-full justify-end">
+                <input type="number" id="oilFirstReading" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center" placeholder="Enter first reading">
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <h2 class="block text-lg sm:text-xl font-semibold text-gray-700 mb-2 text-left">Oil Second Reading</h2>
+            <div class="flex flex-row gap-x-2 w-full justify-end">
+                <input type="number" id="oilSecondReading" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center" placeholder="Enter second reading">
+            </div>
+        </div>
+
+        <hr class="my-8 border-t border-gray-300">
+
+        <div class="mb-6">
+            <h2 class="block text-lg sm:text-xl font-semibold text-gray-700 mb-2 text-left">speed First Reading</h2>
+            <div class="flex flex-row gap-x-2 w-full justify-end">
+                <input type="number" id="speedFirstReading1" class="w-1/3 p-3 border-2 border-yellow-400 bg-yellow-50 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 shadow-sm text-gray-800 text-center" placeholder="3A">
+                <input type="number" id="speedFirstReading2" class="w-1/3 p-3 border-2 border-yellow-400 bg-yellow-50 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 shadow-sm text-gray-800 text-center" placeholder="4A">
+                <input type="number" id="speedFirstReading3" class="w-1/3 p-3 border-2 border-yellow-400 bg-yellow-50 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 shadow-sm text-gray-800 text-center" placeholder="5A">
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <h2 class="block text-lg sm:text-xl font-semibold text-gray-700 mb-2 text-left">speed Second Reading</h2>
+            <div class="flex flex-row gap-x-2 w-full justify-end">
+                <input type="number" id="speedSecondReading1" class="w-1/3 p-3 border-2 border-yellow-400 bg-yellow-50 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 shadow-sm text-gray-800 text-center" placeholder="3A">
+                <input type="number" id="speedSecondReading2" class="w-1/3 p-3 border-2 border-yellow-400 bg-yellow-50 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 shadow-sm text-gray-800 text-center" placeholder="4A">
+                <input type="number" id="speedSecondReading3" class="w-1/3 p-3 border-2 border-yellow-400 bg-yellow-50 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 shadow-sm text-gray-800 text-center" placeholder="5A">
+            </div>
+        </div>
+
+        <hr class="my-8 border-t border-gray-300">
+
+        <div class="mb-6">
+            <h2 class="block text-lg sm:text-xl font-semibold text-gray-700 mb-2 text-left">Petrol First Reading</h2>
+            <div class="flex flex-row gap-x-2 w-full justify-end">
+                <input type="number" id="firstReading1" class="w-1/3 p-3 border-2 border-green-400 bg-green-50 rounded-lg focus:ring-green-500 focus:border-green-500 shadow-sm text-gray-800 text-center" placeholder="MS1">
+                <input type="number" id="firstReading2" class="w-1/3 p-3 border-2 border-green-400 bg-green-50 rounded-lg focus:ring-green-500 focus:border-green-500 shadow-sm text-gray-800 text-center" placeholder="MS2" >
+                <input type="number" id="firstReading3" class="w-1/3 p-3 border-2 border-green-400 bg-green-50 rounded-lg focus:ring-green-500 focus:border-green-500 shadow-sm text-gray-800 text-center" placeholder="MS3">
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <h2 class="block text-lg sm:text-xl font-semibold text-gray-700 mb-2 text-left">Petrol Second Reading</h2>
+            <div class="flex flex-row gap-x-2 w-full justify-end">
+                <input type="number" id="secondReading1" class="w-1/3 p-3 border-2 border-green-400 bg-green-50 rounded-lg focus:ring-green-500 focus:border-green-500 shadow-sm text-gray-800 text-center" placeholder="MS1">
+                <input type="number" id="secondReading2" class="w-1/3 p-3 border-2 border-green-400 bg-green-50 rounded-lg focus:ring-green-500 focus:border-green-500 shadow-sm text-gray-800 text-center" placeholder="MS2">
+                <input type="number" id="secondReading3" class="w-1/3 p-3 border-2 border-green-400 bg-green-50 rounded-lg focus:ring-green-500 focus:border-green-500 shadow-sm text-gray-800 text-center" placeholder="MS3">
+            </div>
+        </div>
+
+        <hr class="my-8 border-t border-gray-300">
+
+        <div class="mb-6">
+            <h2 class="block text-lg sm:text-xl font-semibold text-gray-700 mb-2 text-left">Petrol First Reading</h2>
+            <div class="flex flex-row gap-x-2 w-full justify-end">
+                <input type="number" id="firstReading4" class="w-1/3 p-3 border-2 border-green-400 bg-green-50 rounded-lg focus:ring-green-500 focus:border-green-500 shadow-sm text-gray-800 text-center" placeholder="MS4" >
+                <input type="number" id="firstReading5" class="w-1/3 p-3 border-2 border-green-400 bg-green-50 rounded-lg focus:ring-green-500 focus:border-green-500 shadow-sm text-gray-800 text-center" placeholder="MS5">
+                <input type="number" id="firstReading6" class="w-1/3 p-3 border-2 border-green-400 bg-green-50 rounded-lg focus:ring-green-500 focus:border-green-500 shadow-sm text-gray-800 text-center" placeholder="MS6">
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <h2 class="block text-lg sm:text-xl font-semibold text-gray-700 mb-2 text-left">Petrol Second Reading</h2>
+            <div class="flex flex-row gap-x-2 w-full justify-end">
+                <input type="number" id="secondReading4" class="w-1/3 p-3 border-2 border-green-400 bg-green-50 rounded-lg focus:ring-green-500 focus:border-green-500 shadow-sm text-gray-800 text-center" placeholder="MS4">
+                <input type="number" id="secondReading5" class="w-1/3 p-3 border-2 border-green-400 bg-green-50 rounded-lg focus:ring-green-500 focus:border-green-500 shadow-sm text-gray-800 text-center" placeholder="-MS5">
+                <input type="number" id="secondReading6" class="w-1/3 p-3 border-2 border-green-400 bg-green-50 rounded-lg focus:ring-green-500 focus:border-green-500 shadow-sm text-gray-800 text-center" placeholder="MS6">
+            </div>
+        </div>
+        <hr class="my-8 border-t border-gray-300">
+
+        <div class="mb-6">
+            <h2 class="block text-lg sm:text-xl font-semibold text-gray-700 mb-2 text-left">Diesel First Reading</h2>
+            <div class="flex flex-row gap-x-2 w-full justify-end">
+                <input type="number" id="dieselFirstReading1" class="w-1/3 p-3 border-2 border-blue-400 bg-blue-50 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center" placeholder="HS1">
+                <input type="number" id="dieselFirstReading2" class="w-1/3 p-3 border-2 border-blue-400 bg-blue-50 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center" placeholder="HS2">
+                <input type="number" id="dieselFirstReading3" class="w-1/3 p-3 border-2 border-blue-400 bg-blue-50 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center" placeholder="HS3">
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <h2 class="block text-lg sm:text-xl font-semibold text-gray-700 mb-2 text-left">Diesel Second Reading</h2>
+            <div class="flex flex-row gap-x-2 w-full justify-end">
+                <input type="number" id="dieselSecondReading1" class="w-1/3 p-3 border-2 border-blue-400 bg-blue-50 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center" placeholder="HS1">
+                <input type="number" id="dieselSecondReading2" class="w-1/3 p-3 border-2 border-blue-400 bg-blue-50 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center" placeholder="HS2">
+                <input type="number" id="dieselSecondReading3" class="w-1/3 p-3 border-2 border-blue-400 bg-blue-50 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center" placeholder="HS3">
+            </div>
+        </div>
+
+        <hr class="my-8 border-t border-gray-300">
+
+        <div class="mb-6">
+            <h2 class="block text-lg sm:text-xl font-semibold text-gray-700 mb-2 text-left">Diesel First Reading</h2>
+            <div class="flex flex-row gap-x-2 w-full justify-end">
+                <input type="number" id="dieselFirstReading4" class="w-1/3 p-3 border-2 border-blue-400 bg-blue-50 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center" placeholder="HS4">
+                <input type="number" id="dieselFirstReading5" class="w-1/3 p-3 border-2 border-blue-400 bg-blue-50 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center" placeholder="HS5">
+                <input type="number" id="dieselFirstReading6" class="w-1/3 p-3 border-2 border-blue-400 bg-blue-50 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center" placeholder="HS6">
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <h2 class="block text-lg sm:text-xl font-semibold text-gray-700 mb-2 text-left">Diesel Second Reading</h2>
+            <div class="flex flex-row gap-x-2 w-full justify-end">
+                <input type="number" id="dieselSecondReading4" class="w-1/3 p-3 border-2 border-blue-400 bg-blue-50 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center" placeholder="HS4">
+                <input type="number" id="dieselSecondReading5" class="w-1/3 p-3 border-2 border-blue-400 bg-blue-50 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center" placeholder="HS5">
+                <input type="number" id="dieselSecondReading6" class="w-1/3 p-3 border-2 border-blue-400 bg-blue-50 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center" placeholder="HS6">
+            </div>
+        </div>
+        <hr class="my-8 border-t border-gray-300">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div>
+                <label for="speedTestQuantity" class="block text-lg font-semibold text-gray-700 mb-2 text-center">Speed Test Quantity (Liters)</label>
+                <input type="number" id="speedTestQuantity" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center" placeholder="Enter liters tested">
+            </div>
+            <div>
+                <label for="petrolTestQuantity" class="block text-lg font-semibold text-gray-700 mb-2 text-center">Petrol Test Quantity (Liters)</label>
+                <input type="number" id="petrolTestQuantity" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center" placeholder="Enter liters tested">
+            </div>
+            <div>
+                <label for="dieselTestQuantity" class="block text-lg font-semibold text-gray-700 mb-2 text-center">Diesel Test Quantity (Liters)</label>
+                <input type="number" id="dieselTestQuantity" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center" placeholder="Enter liters tested">
+            </div>
+        </div>
+        <hr class="my-8 border-t border-gray-300">
+
+        <div class="mb-6">
+            <h2 class="block text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Packed Oil</h2>
+            <div id="packedOilEntriesContainer" class="space-y-3"></div>
+            <button type="button" onclick="addPackedOilEntry()" class="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-md transition duration-300 ease-in-out">
+                Add Packed Oil Entry
+            </button>
+        </div>
+
+        <hr class="my-8 border-t border-gray-300">
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+    <div class="col-span-1 md:col-span-2">
+        <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Credit</h2>
+        <div id="creditEntriesContainer" class="space-y-3"></div>
+        <button type="button" onclick="addEntry('credit')" class="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-md transition duration-300 ease-in-out">
+            Add Credit Entry
+        </button>
+        <hr class="my-8 border-t border-gray-200"> 
+    </div>
+
+    <div class="col-span-1">
+        <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Credit Return</h2>
+        <div id="debitEntriesContainer" class="space-y-3"></div>
+        <button type="button" onclick="addEntry('debit')" class="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-md transition duration-300 ease-in-out">
+            Add Credit Return Entry
+        </button>
+    </div>
+
+    <div class="col-span-1">
+        <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Credit Return Bank</h2>
+        <div id="debitBankEntriesContainer" class="space-y-3"></div>
+        <button type="button" onclick="addEntry('debitBank')" class="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-md transition duration-300 ease-in-out">
+            Add Credit Return Bank Entry
+        </button>
+    </div>
+</div>
+
+<hr class="my-8 border-t border-gray-300">
+        <div class="mb-6">
+            <h2 class="block text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Expenses</h2>
+            <div id="expenseEntriesContainer" class="space-y-3">
+                </div>
+            <button type="button" onclick="addEntry('expense', 'CARD')" class="mt-4 w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg text-md transition duration-300 ease-in-out">
+                Add Expense Entry
+            </button>
+        </div>
+        <hr class="my-8 border-t border-gray-300">
+<div class="mb-6">
+    <h2 class="block text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Expenses Bank</h2>
+    <div id="expenseBankEntriesContainer" class="space-y-3">
+        </div>
+    <button type="button" onclick="addEntry('expenseBank')" class="mt-4 w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg text-md transition duration-300 ease-in-out">
+        Add Expense Bank Entry
+    </button>
+</div>
+
+        <hr class="my-8 border-t border-gray-300">
+        <div class="mb-6">
+            <label for="cashBankDeposit" class="block text-lg font-semibold text-gray-700 mb-2 text-center">Cash Bank Deposit</label>
+            <input type="number" id="cashBankDeposit" 
+                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center" 
+                   placeholder="Enter amount deposited">
+        </div>
+        <hr class="my-8 border-t border-gray-300">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+            <div class="col-span-1">
+                <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 text-center">Denomination Calculator</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    
+                    <input type="number" id="note500" placeholder="500 x" class="denom-input p-2 border rounded">
+                    <input type="number" id="note200" placeholder="200 x" class="denom-input p-2 border rounded">
+                    <input type="number" id="note100" placeholder="100 x" class="denom-input p-2 border rounded">
+                    <input type="number" id="note50" placeholder="50 x" class="denom-input p-2 border rounded">
+                    <input type="number" id="note20" placeholder="20 x" class="denom-input p-2 border rounded">
+                    <input type="number" id="note10" placeholder="10 x" class="denom-input p-2 border rounded">
+                    <input type="number" id="note5" placeholder="5 x" class="denom-input p-2 border rounded">
+                    <input type="number" id="coins" placeholder="Coins" class="denom-input p-2 border rounded">
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <label class="block font-bold">Total Denomination Amount</label>
+            <input type="number" id="totalAmount" class="w-full p-3 bg-gray-100 border rounded-lg font-bold text-blue-600" readonly>
+        </div>
+
+        <hr class="my-8 border-t border-gray-300">
+
+        <div class="grid grid-cols-1 mt-8">
+            <button onclick="saveAndNavigate()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg text-xl transition duration-300 ease-in-out">
+                Submit
+            </button>
+        </div>
+
+    </div>
+<datalist id="meterSuggestions"></datalist>
+    <script>
+        function showMessageBox(message, type) {
+            const overlay = document.createElement('div');
+            overlay.className = 'message-box-overlay';
+            document.body.appendChild(overlay);
+            const messageBox = document.createElement('div');
+            messageBox.className = 'message-box';
+            const messageText = document.createElement('p');
+            messageText.textContent = message;
+            messageText.classList.add('text-lg', 'font-semibold', 'mb-4');
+            if (type === 'success') messageText.classList.add('text-green-600');
+            else if (type === 'error') messageText.classList.add('text-red-600');
+            messageBox.appendChild(messageText);
+            const closeButton = document.createElement('button');
+            closeButton.textContent = 'OK';
+            closeButton.classList.add('bg-blue-600', 'hover:bg-blue-700', 'text-white', 'font-bold', 'py-2', 'px-4', 'rounded-lg', 'transition', 'duration-300', 'ease-in-out');
+            closeButton.onclick = () => {
+                document.body.removeChild(messageBox);
+                document.body.removeChild(overlay);
+            };
+            messageBox.appendChild(closeButton);
+            document.body.appendChild(messageBox);
+        }
+
+        let creditEntryCount = 0;
+        let debitEntryCount = 0;
+        let packedOilEntryCount = 0; 
+        let availableOilTypes = [];
+        let availableParties = []; 
+        let availableExpenses = [];
+        let expenseEntryCount = 0;
+
+        async function fetchExpenses() {
+    try {
+        const response = await fetch('/api/expenses');
+        if (response.ok) {
+            const data = await response.json();
+            availableExpenses = data.map(exp => exp.name);
+        }
+    } catch (error) {
+        console.error('Error fetching expenses:', error);
+    }
+}
+
+        function addEntry(type, defaultName = '') {
+    let containerId;
+    if (type === 'credit') {
+        containerId = 'creditEntriesContainer';
+    } else if (type === 'debit') {
+        containerId = 'debitEntriesContainer';
+    } else if (type === 'debitBank') {
+        containerId = 'debitBankEntriesContainer';
+    } else if (type === 'expenseBank') { // New Condition
+        containerId = 'expenseBankEntriesContainer';
+    } else {
+        containerId = 'expenseEntriesContainer';
+    }
+    
+    const container = document.getElementById(containerId);
+    if (!container) return; // Safety check
+
+    const entryDiv = document.createElement('div');
+    entryDiv.className = 'flex items-center gap-x-2 mb-3';
+
+    const nameElement = document.createElement('select');
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = ""; 
+    // Show "Select Expense" for both cash and bank expenses
+    defaultOpt.textContent = (type === 'expense' || type === 'expenseBank') ? "Select Expense" : "Select Name"; 
+    defaultOpt.disabled = true; 
+    defaultOpt.selected = true;
+    nameElement.appendChild(defaultOpt);
+    
+    // Logic: Use expense list for both types of expenses, otherwise use parties
+    const listToUse = (type === 'expense' || type === 'expenseBank') ? availableExpenses : availableParties;
+
+    listToUse.forEach(name => {
+        const option = document.createElement('option');
+        option.value = name; 
+        option.textContent = name;
+        if (name === defaultName) option.selected = true;
+        nameElement.appendChild(option);
+    });
+
+    nameElement.className = 'w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center dynamic-entry-name';
+
+    const amountInput = document.createElement('input');
+    amountInput.type = 'number';
+    amountInput.placeholder = '0';
+    amountInput.className = 'w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center dynamic-entry-amount';
+
+    const removeButton = document.createElement('button');
+    removeButton.textContent = 'X';
+    removeButton.className = 'ml-2 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg';
+    removeButton.onclick = () => container.removeChild(entryDiv);
+
+    entryDiv.appendChild(nameElement);
+    entryDiv.appendChild(amountInput);
+    entryDiv.appendChild(removeButton);
+    container.appendChild(entryDiv);
+}
+
+        function addPackedOilEntry() {
+            const container = document.getElementById('packedOilEntriesContainer');
+            const entryDiv = document.createElement('div');
+            entryDiv.className = 'flex items-center gap-x-2 mb-3';
+            const nameSelect = document.createElement('select');
+            nameSelect.className = 'w-1/3 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center packed-oil-name';
+            const defaultOption = document.createElement('option');
+            defaultOption.value = ""; defaultOption.textContent = "Select Oil Type"; defaultOption.disabled = true; defaultOption.selected = true;
+            nameSelect.appendChild(defaultOption);
+            availableOilTypes.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type; option.textContent = type;
+                nameSelect.appendChild(option);
+            });
+            const quantityInput = document.createElement('input');
+            quantityInput.type = 'number'; quantityInput.placeholder = 'Qty Sold';
+            quantityInput.className = 'w-1/3 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center packed-oil-quantity';
+            const amountInput = document.createElement('input');
+            amountInput.type = 'number'; amountInput.placeholder = 'Price/Rate';
+            amountInput.className = 'w-1/3 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm text-gray-800 text-center packed-oil-amount';
+            const removeButton = document.createElement('button');
+            removeButton.innerHTML = 'X';
+            removeButton.className = 'ml-2 bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-3 rounded-lg transition duration-200';
+            removeButton.onclick = () => container.removeChild(entryDiv);
+            entryDiv.appendChild(nameSelect); entryDiv.appendChild(quantityInput); entryDiv.appendChild(amountInput); entryDiv.appendChild(removeButton);
+            container.appendChild(entryDiv);
+        }
+        async function fetchParties() {
+            try {
+                const response = await fetch('/api/parties');
+                if (response.ok) {
+                    const data = await response.json();
+                    availableParties = data.map(party => party.name);
+                }
+            } catch (error) {
+                console.error('Error fetching parties:', error);
+            }
+        }
+
+        async function fetchOilTypes() {
+            try {
+                const response = await fetch('/api/oilStock');
+                if (response.ok) {
+                    const data = await response.json();
+                    availableOilTypes = data.map(oil => oil.type);
+                }
+            } catch (error) { console.error('Error fetching oil types:', error); }
+        }
+
+        async function populateStaffDropdown() {
+            const selectElement = document.getElementById('selectedId');
+            try {
+                const response = await fetch('/api/staff');
+                if (response.ok) {
+                    const staffList = await response.json();
+                    staffList.forEach(staff => {
+                        const option = document.createElement('option');
+                        option.value = staff.staffId; option.textContent = staff.name;
+                        selectElement.appendChild(option);
+                    });
+                }
+            } catch (error) { console.error('Error fetching staff data:', error); }
+        }
+
+       
+
+function calculateTotalDenomination() {
+    const val500  = (parseFloat(document.getElementById('note500').value) || 0) * 500;
+    const val200  = (parseFloat(document.getElementById('note200').value) || 0) * 200;
+    const val100  = (parseFloat(document.getElementById('note100').value) || 0) * 100;
+    const val50   = (parseFloat(document.getElementById('note50').value) || 0) * 50;
+    const val20   = (parseFloat(document.getElementById('note20').value) || 0) * 20;
+    const val10   = (parseFloat(document.getElementById('note10').value) || 0) * 10;
+    const val5    = (parseFloat(document.getElementById('note5').value) || 0) * 5;
+    const coins   = parseFloat(document.getElementById('coins').value) || 0;
+
+    const total = val500 + val200 + val100 + val50 + val20 + val10 + val5 + coins;
+    
+    document.getElementById('totalAmount').value = total.toFixed(2);
+}
+
+        async function loadAndDisplayPrices() {
+    try {
+        const response = await fetch('/api/prices/current');
+        if (response.ok) {
+            const data = await response.json();
+            document.getElementById('petrol').value = data.petrolPrice.toFixed(2);
+            document.getElementById('diesel').value = data.dieselPrice.toFixed(2);
+            document.getElementById('oil').value = data.oilPrice.toFixed(2);
+            
+            // Add this line to display the Speed Price
+            const speedField = document.getElementById('speed');
+            if (speedField) {
+                speedField.value = (data.speedPrice || 0).toFixed(2);
+            }
+        }
+    } catch (error) { 
+        console.error('Error fetching prices:', error); 
+    }
+}
+
+        document.addEventListener('DOMContentLoaded', () => {
+    populateStaffDropdown();
+    loadAndDisplayPrices();
+    fetchOilTypes();
+    fetchParties();
+    fetchExpenses();
+
+    document.addEventListener('wheel', function(event) {
+        if (document.activeElement.type === 'number') {
+            document.activeElement.blur();
+        }
+    });
+
+    // Attach listeners for cash counting
+    document.querySelectorAll('.denom-input').forEach(input => {
+        input.addEventListener('input', calculateTotalDenomination);
+    });
+
+    const savedData = localStorage.getItem('recentNozzleReadings');
+    
+    if (savedData) {
+        const backup = JSON.parse(savedData);
+        
+        // --- FIXED: Create unique datalist per input to prevent overwriting ---
+        const attachUniqueSuggestion = (id, value) => {
+            const input = document.getElementById(id);
+            if (input && value) {
+                const uniqueListId = `list-${id}`;
+                
+                // 1. Create a unique datalist element for this specific nozzle
+                let datalist = document.getElementById(uniqueListId);
+                if (!datalist) {
+                    datalist = document.createElement('datalist');
+                    datalist.id = uniqueListId;
+                    document.body.appendChild(datalist);
+                }
+                
+                // 2. Set the value (Only the dropdown option you want)
+                datalist.innerHTML = `<option value="${value}">Last Reading: ${value}</option>`;
+                
+                // 3. Link the input to its own private list
+                input.setAttribute('list', uniqueListId);
+            }
+        };
+
+        // Loop through Petrol and Diesel nozzles (1-6)
+        for (let i = 1; i <= 6; i++) {
+            // Petrol Nozzles
+            if (backup.petrol && backup.petrol[`nozzle${i}`]) {
+                attachUniqueSuggestion(`firstReading${i}`, backup.petrol[`nozzle${i}`].second);
+            }
+            // Diesel Nozzles
+            if (backup.diesel && backup.diesel[`nozzle${i}`]) {
+                attachUniqueSuggestion(`dieselFirstReading${i}`, backup.diesel[`nozzle${i}`].second);
+            }
+        }
+
+        // Loop through Speed nozzles (1-3)
+        for (let i = 1; i <= 3; i++) {
+            if (backup.speed && backup.speed[`nozzle${i}`]) {
+                attachUniqueSuggestion(`speedFirstReading${i}`, backup.speed[`nozzle${i}`].second);
+            }
+        }
+    }
+});
+        
+
+     async function saveAndNavigate() {
+    const submitButton = document.querySelector('button[onclick="saveAndNavigate()"]');
+    const shiftEl = document.getElementById('shift');
+    const shift = shiftEl ? shiftEl.value : '';
+
+    // 1. Nozzle Validation Logic
+    const isNozzleValid = (secondId, firstId, label) => {
+        const firstEl = document.getElementById(firstId);
+        const secondEl = document.getElementById(secondId);
+        
+        if (!firstEl || !secondEl) return true;
+
+        const first = parseFloat(firstEl.value) || 0;
+        const second = parseFloat(secondEl.value) || 0;
+        
+        // If second is empty, we don't validate difference (it's just an empty field)
+        if (secondEl.value === "") return true;
+
+        let diff;
+        if (second >= first) {
+            diff = second - first;
+        } else {
+            // Handle rollover for a 15-digit meter
+            const maxValue = 1000000000000000; 
+            diff = (maxValue - first) + second;
+        }
+
+        if (diff < 0 || diff > 2000) {
+            showMessageBox(`${label} difference must be between 0 and 2000.`, 'error');
+            return false;
+        }
+        return true;
+    };
+
+    // 2. Pre-Submission Validations
+    if (!shift) {
+        showMessageBox('Please select a shift before submitting.', 'error');
+        return; 
+    }
+
+    for (let i = 1; i <= 6; i++) {
+        if (!isNozzleValid(`secondReading${i}`, `firstReading${i}`, `Petrol Nozzle ${i}`)) return;
+        if (!isNozzleValid(`dieselSecondReading${i}`, `dieselFirstReading${i}`, `Diesel Nozzle ${i}`)) return;
+    }
+    for (let i = 1; i <= 3; i++) {
+        if (!isNozzleValid(`speedSecondReading${i}`, `speedFirstReading${i}`, `Speed Nozzle ${i}`)) return;
+    }
+
+    // 3. UI Feedback
+    if (submitButton) { 
+        submitButton.disabled = true; 
+        submitButton.textContent = 'Synchronizing with Server...'; 
+    }
+
+    const denominationTotal = 
+        (parseFloat(document.getElementById('note500')?.value || 0) * 500) +
+        (parseFloat(document.getElementById('note200')?.value || 0) * 200) +
+        (parseFloat(document.getElementById('note100')?.value || 0) * 100) +
+        (parseFloat(document.getElementById('note50')?.value || 0) * 50) +
+        (parseFloat(document.getElementById('note20')?.value || 0) * 20) +
+        (parseFloat(document.getElementById('note10')?.value || 0) * 10) +
+        (parseFloat(document.getElementById('note5')?.value || 0) * 5) +
+        (parseFloat(document.getElementById('coins')?.value || 0) * 1);
+
+    // 4. Data Aggregation for API
+    const data = {
+        currentDate: document.getElementById('currentDate')?.value || '',
+        selectedId: document.getElementById('selectedId')?.value || '',
+        shift: shift,
+        cashBankDeposit: parseFloat(document.getElementById('cashBankDeposit')?.value) || 0,
+        petrol: parseFloat(document.getElementById('petrol')?.value) || 0,
+        diesel: parseFloat(document.getElementById('diesel')?.value) || 0,
+        oil: parseFloat(document.getElementById('oil')?.value) || 0,
+        speed: parseFloat(document.getElementById('speed')?.value) || 0,
+        totalAmount: parseFloat(document.getElementById('totalAmount')?.value) || 0,
+        oilFirstReading: parseFloat(document.getElementById('oilFirstReading')?.value) || 0,
+        oilSecondReading: parseFloat(document.getElementById('oilSecondReading')?.value) || 0,
+        speedTestQuantity: parseFloat(document.getElementById('speedTestQuantity')?.value) || 0,
+        petrolTestQuantity: parseFloat(document.getElementById('petrolTestQuantity')?.value) || 0,
+        dieselTestQuantity: parseFloat(document.getElementById('dieselTestQuantity')?.value) || 0,
+        totalDenomination: denominationTotal
+    };
+
+    const notes = ['note500', 'note200', 'note100', 'note50', 'note20', 'note10', 'note5', 'coins'];
+    notes.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) data[id] = parseFloat(el.value) || 0;
+    });
+
+    const nozzlePrefixes = ['firstReading', 'secondReading', 'dieselFirstReading', 'dieselSecondReading', 'speedFirstReading', 'speedSecondReading'];
+    nozzlePrefixes.forEach(prefix => {
+        for (let i = 1; i <= 6; i++) {
+            const el = document.getElementById(`${prefix}${i}`);
+            if (el) data[`${prefix}${i}`] = parseFloat(el.value) || 0;
+        }
+    });
+
+    const getEntries = (containerId) => {
+        const entries = [];
+        const container = document.getElementById(containerId);
+        if (!container) return entries;
+        container.querySelectorAll(':scope > div').forEach(div => {
+            const name = div.querySelector('.dynamic-entry-name, .packed-oil-name')?.value;
+            const amount = parseFloat(div.querySelector('.dynamic-entry-amount, .packed-oil-quantity')?.value) || 0;
+            const price = parseFloat(div.querySelector('.packed-oil-amount')?.value) || 0;
+            if (name) {
+                const entry = { name, amount };
+                if (price) entry.price = price; 
+                entries.push(entry);
+            }
+        });
+        return entries;
+    };
+
+    data.packedOilEntries = getEntries('packedOilEntriesContainer');
+    data.creditEntries = getEntries('creditEntriesContainer');
+    data.debitEntries = getEntries('debitEntriesContainer');
+    data.debitBankEntries = getEntries('debitBankEntriesContainer');
+    data.expenseEntries = getEntries('expenseEntriesContainer');
+    data.expenseBankEntries = getEntries('expenseBankEntriesContainer');
+
+    // --- 5. FIXED: LOCAL BACKUP WITH MERGE LOGIC ---
+    const existingData = localStorage.getItem('recentNozzleReadings');
+    let readingsBackup = existingData ? JSON.parse(existingData) : {
+        timestamp: new Date().toISOString(),
+        petrol: {},
+        diesel: {},
+        speed: {}
+    };
+
+    // Update only the nozzles that have values in the current inputs
+    for (let i = 1; i <= 6; i++) {
+        const pSecond = document.getElementById(`secondReading${i}`)?.value;
+        const dSecond = document.getElementById(`dieselSecondReading${i}`)?.value;
+
+        if (pSecond && pSecond.trim() !== "") {
+            readingsBackup.petrol[`nozzle${i}`] = { second: pSecond };
+        }
+        if (dSecond && dSecond.trim() !== "") {
+            readingsBackup.diesel[`nozzle${i}`] = { second: dSecond };
+        }
+    }
+
+    for (let i = 1; i <= 3; i++) {
+        const sSecond = document.getElementById(`speedSecondReading${i}`)?.value;
+        if (sSecond && sSecond.trim() !== "") {
+            readingsBackup.speed[`nozzle${i}`] = { second: sSecond };
+        }
+    }
+
+    readingsBackup.timestamp = new Date().toISOString();
+    localStorage.setItem('recentNozzleReadings', JSON.stringify(readingsBackup));
+    console.log('Meter readings merged and backed up locally.');
+
+    // 6. Submit to API
+    try {
+        const response = await fetch('/api/saveReading', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showMessageBox('Success! Data saved and readings rolled over.', 'success');
+            
+            const packedContainer = document.getElementById('packedOilEntriesContainer');
+            if (packedContainer) packedContainer.innerHTML = '';
+            
+            setTimeout(() => {
+                window.location.href = `/view?id=${result._id}`;
+            }, 3000);
+        } else {
+            throw new Error(result.message || 'Server error.');
+        }
+    } catch (error) {
+        console.error('Submission Error:', error);
+        showMessageBox(`Error: ${error.message}`, 'error');
+        if (submitButton) { 
+            submitButton.disabled = false; 
+            submitButton.textContent = 'Submit'; 
+        }
+    }
+}
+    </script>
+</body>
+</html>
