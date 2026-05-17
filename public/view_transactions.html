@@ -116,107 +116,102 @@
             } catch (error) { console.error("Staff Error:", error); }
         }
 
-        async function fetchTransactions() {
-    const fromDate = fromDateInput.value;
-    const toDate = toDateInput.value;
-    const staffId = staffSelect.value;
-    const filterType = typeSelect.value;
-    const searchTerm = searchInput.value.toLowerCase();
+       async function fetchTransactions() {
+    const fromDate = fromDateInput.value;
+    const toDate = toDateInput.value;
+    const staffId = staffSelect.value;
+    const filterType = typeSelect.value;
+    const searchTerm = searchInput.value.toLowerCase();
 
-    if (!fromDate || !toDate) return;
+    if (!fromDate || !toDate) return;
 
-    try {
-        const response = await fetch(`/api/transactions/creditDebit?fromDate=${fromDate}&toDate=${toDate}&staffId=${staffId}`);
-        if (!response.ok) throw new Error('Server Error');
+    try {
+        const response = await fetch(`/api/transactions/creditDebit?fromDate=${fromDate}&toDate=${toDate}&staffId=${staffId}`);
+        if (!response.ok) throw new Error('Server Error');
 
-        const data = await response.json();
-        transactionsDisplay.innerHTML = ""; 
+        const data = await response.json();
+        transactionsDisplay.innerHTML = "";
+        
+        // Initialize all totals
+        let totalCredit = 0, 
+            totalDebit = 0, 
+            totalDebitBank = 0, 
+            totalExpense = 0, 
+            totalExpenseBank = 0;
+        let hasAnyData = false;
 
-        // Initialize all totals
-        let totalCredit = 0, 
-            totalDebit = 0, 
-            totalDebitBank = 0, 
-            totalExpense = 0, 
-            totalExpenseBank = 0;
-        let hasAnyData = false;
+        for (const date in data) {
+            const dayData = data[date];
+            let dateHTML = `<div class="date-block mb-5 border border-gray-200 rounded-xl p-3 bg-gray-50/50">
+                            <h3 class="text-[#2c3e50] m-0 mb-3 text-lg md:text-xl border-b-2 border-gray-200 pb-2 font-bold">${date}</h3>`;
+            let hasDailyData = false;
 
-        for (const date in data) {
-            const dayData = data[date];
-            let dateHTML = `<div class="date-block mb-5 border border-gray-200 rounded-xl p-3 bg-gray-50/50">
-                            <h3 class="text-[#2c3e50] m-0 mb-3 text-lg md:text-xl border-b-2 border-gray-200 pb-2 font-bold">${date}</h3>`;
-            let hasDailyData = false;
+            const process = (entries, label) => {
+                if (!entries || !Array.isArray(entries)) return;
+                entries.forEach(entry => {
+                    const entryName = entry.name || 'Unnamed';
+                    
+                    // Logic for "All" filter to include Credits, Returns, and Bank entries
+                    const isAllType = filterType === 'all' && (label === 'Credit' || label === 'Debit' || label === 'Debit Bank');
+                    
+                    // Matches specific dropdown values (e.g., 'expensebank' matches 'Expense Bank')
+                    const isSpecificType = filterType === label.toLowerCase().replace(/\s/g, "");
+                    const matchesSearch = entryName.toLowerCase().includes(searchTerm);
 
-            const process = (entries, label) => {
-                if (!entries || !Array.isArray(entries)) return;
-                entries.forEach(entry => {
-                    const entryName = entry.name || 'Unnamed';
-                    
-                    // FIXED: Now includes 'Credit Return' and 'Expense' categories in the "All" view
-                    const isAllType = filterType === 'all' && (
-                        label === 'Credit' || 
-                        label === 'Credit Return' || 
-                        label === 'Debit Bank' || 
-                        label === 'Expense' || 
-                        label === 'Expense Bank'
-                    );
-                    
-                    // Matches dropdown (e.g., 'creditreturn' matches 'Credit Return')
-                    const isSpecificType = filterType === label.toLowerCase().replace(/\s/g, "");
-                    const matchesSearch = entryName.toLowerCase().includes(searchTerm);
+                    if ((isAllType || isSpecificType) && matchesSearch) {
+                        const amount = parseFloat(entry.amount) || 0;
+                        
+                        // Dynamic coloring based on transaction type
+                        let colorClass = "text-red-600"; // Default
+                        if (label === 'Credit') colorClass = "text-green-600";
+                        if (label === 'Debit Bank') colorClass = "text-blue-700"; 
+                        if (label === 'Expense') colorClass = "text-orange-500";
+                        if (label === 'Expense Bank') colorClass = "text-purple-600";
 
-                    if ((isAllType || isSpecificType) && matchesSearch) {
-                        const amount = parseFloat(entry.amount) || 0;
-                        
-                        // Dynamic coloring
-                        let colorClass = "text-red-600"; 
-                        if (label === 'Credit') colorClass = "text-green-600";
-                        if (label === 'Debit Bank') colorClass = "text-blue-700"; 
-                        if (label === 'Expense') colorClass = "text-orange-500";
-                        if (label === 'Expense Bank') colorClass = "text-purple-600";
+                        dateHTML += `
+                            <div class="transaction-row flex justify-between items-center p-3 border-b border-dashed border-gray-200 cursor-pointer rounded-md hover:bg-blue-50 transition-colors text-sm md:text-base" onclick="quickSearch('${entryName.replace(/'/g, "\\'")}')">
+                                <span><strong>${entryName}</strong><br><small class="text-gray-500">(${label})</small></span>
+                                <span class="${colorClass} font-bold">₹${amount.toFixed(2)}</span>
+                            </div>`;
+                        
+                        // Accumulate totals based on label
+                        if (label === 'Credit') totalCredit += amount;
+                        if (label === 'Debit') totalDebit += amount;
+                        if (label === 'Debit Bank') totalDebitBank += amount;
+                        if (label === 'Expense') totalExpense += amount;
+                        if (label === 'Expense Bank') totalExpenseBank += amount;
+                        
+                        hasDailyData = true;
+                        hasAnyData = true;
+                    }
+                });
+            };
 
-                        dateHTML += `
-                            <div class="transaction-row flex justify-between items-center p-3 border-b border-dashed border-gray-200 cursor-pointer rounded-md hover:bg-blue-50 transition-colors text-sm md:text-base" onclick="quickSearch('${entryName.replace(/'/g, "\\\\')}')">
-                                <span><strong>${entryName}</strong><br><small class="text-gray-500">(${label})</small></span>
-                                <span class="${colorClass} font-bold">₹${amount.toFixed(2)}</span>
-                            </div>`;
+            // Process all categories from the API response
+            process(dayData.credits, 'Credit');
+            process(dayData.debits, 'Debit');
+            process(dayData.debitBankEntries, 'Debit Bank');
+            process(dayData.expenseEntries, 'Expense');
+            process(dayData.expenseBankEntries, 'Expense Bank');
 
-                        // Accumulate totals based on NEW label
-                        if (label === 'Credit') totalCredit += amount;
-                        if (label === 'Credit Return') totalDebit += amount; // Maps to the debit total
-                        if (label === 'Debit Bank') totalDebitBank += amount;
-                        if (label === 'Expense') totalExpense += amount;
-                        if (label === 'Expense Bank') totalExpenseBank += amount;
+            dateHTML += `</div>`;
+            if (hasDailyData) transactionsDisplay.innerHTML += dateHTML;
+        }
 
-                        hasDailyData = true;
-                        hasAnyData = true;
-                    }
-                });
-            };
+        if (!hasAnyData) {
+            transactionsDisplay.innerHTML = '<p class="text-center text-gray-500 italic py-5">No matching records found.</p>';
+            transactionSummary.classList.add('hidden');
+            return;
+        }
 
-            // Calling the process function with 'Credit Return' instead of 'Debit'
-            process(dayData.credits, 'Credit');
-            process(dayData.debits, 'Credit Return'); 
-            process(dayData.debitBankEntries, 'Debit Bank');
-            process(dayData.expenseEntries, 'Expense');
-            process(dayData.expenseBankEntries, 'Expense Bank');
+        transactionSummary.classList.remove('hidden');
+        // Pass all five totals to the summary function
+        updateSummary(filterType, totalCredit, totalDebit, totalDebitBank, totalExpense, totalExpenseBank);
 
-            dateHTML += `</div>`;
-            if (hasDailyData) transactionsDisplay.innerHTML += dateHTML;
-        }
-
-        if (!hasAnyData) {
-            transactionsDisplay.innerHTML = '<p class="text-center text-gray-500 italic py-5">No matching records found.</p>';
-            transactionSummary.classList.add('hidden');
-            return;
-        }
-
-        transactionSummary.classList.remove('hidden');
-        updateSummary(filterType, totalCredit, totalDebit, totalDebitBank, totalExpense, totalExpenseBank);
-
-    } catch (error) {
-        console.error("Fetch Error:", error);
-        transactionsDisplay.innerHTML = `<p class="text-center text-red-600 py-5">Error fetching data.</p>`;
-    }
+    } catch (error) {
+        console.error("Fetch Error:", error);
+        transactionsDisplay.innerHTML = `<p class="text-center text-red-600 py-5">Error fetching data.</p>`;
+    }
 }
 
         function updateSummary(type, cr, dr, db, ex, exb) {
